@@ -48,6 +48,10 @@ class GBPPlugin {
 
 		global $txp_current_plugin;
 
+		// Store a reference to this class so we can get PHP 4 to work
+		if (version_compare(phpversion(),'5.0.0','<='))
+			global $gbp_admin_lib_refs; $gbp_admin_lib_refs[$txp_current_plugin] = &$this;
+
 		// Get the plugin_name from the global txp_current_plugin variable
 		$this->plugin_name = $txp_current_plugin;
 
@@ -81,6 +85,7 @@ class GBPPlugin {
 					// Let the active_tab know it's active and call it's preload()
 					$tab = &$this->tabs[$this->active_tab];
 					$tab->is_active = 1;
+					$tab->php_4_fix();
 					$tab->preload();
 				}
 			}
@@ -281,7 +286,17 @@ class GBPAdminTabView {
 		$this->title = $title;
 		$this->event = $event;
 		
+		// Note: $this->parent only gets set correctly for PHP 5
 		$this->parent =& $parent->add_tab($this, $is_default);
+	}
+	
+	function php_4_fix() {
+		
+		// Fix references in PHP 4 so sub tabs can access their parent tab
+		if (version_compare(phpversion(),'5.0.0','<=')) { 
+			global $txp_current_plugin, $gbp_admin_lib_refs;
+			$this->parent =& $gbp_admin_lib_refs[$txp_current_plugin];
+		}
 	}
 	
 	function preload() {
@@ -290,6 +305,8 @@ class GBPAdminTabView {
 	}
 
 	function render_tab() {
+
+		$this->php_4_fix();
 
 		// Grab the url to this tab
 		$url = $this->parent->url(array(gbp_tab => $this->event));
