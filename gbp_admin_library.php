@@ -49,7 +49,7 @@ class GBPPlugin {
 		global $txp_current_plugin;
 
 		// Store a reference to this class so we can get PHP 4 to work
-		if (version_compare(phpversion(),'5.0.0','<='))
+		if (version_compare(phpversion(),'5.0.0','<'))
 			global $gbp_admin_lib_refs; $gbp_admin_lib_refs[$txp_current_plugin] = &$this;
 
 		// Get the plugin_name from the global txp_current_plugin variable
@@ -293,7 +293,7 @@ class GBPAdminTabView {
 	function php_4_fix() {
 		
 		// Fix references in PHP 4 so sub tabs can access their parent tab
-		if (version_compare(phpversion(),'5.0.0','<=')) { 
+		if (version_compare(phpversion(),'5.0.0','<')) { 
 			global $txp_current_plugin, $gbp_admin_lib_refs;
 			$this->parent =& $gbp_admin_lib_refs[$txp_current_plugin];
 		}
