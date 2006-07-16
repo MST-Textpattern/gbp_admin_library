@@ -171,6 +171,10 @@ class GBPPlugin {
 
 		// render() gets called because it is specified in txp's register_callback()
 
+		// After a callback we lose track of the current plugin in PHP 4
+		global $txp_current_plugin;
+		$txp_current_plugin = $this->plugin_name;
+
 		$this->render_header();
 		$this->main();
 
