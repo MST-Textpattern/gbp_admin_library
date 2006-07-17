@@ -260,21 +260,43 @@ class GBPPlugin {
 		return join('', $out);
 	}
 
-	function url($vars = array()) {
+	function url( $vars=array(), $gp=false )
+		{
+		/*
+		Expands $vars into a get style url and redirects to that location. These can be 
+		overriden with the current get, post, session variables defined in $this->gp 
+		by setting $gp = true
+		NOTE: If $vars is not an array or is empty then we assume $gp = true.
+		*/
 
-		// Return a url with the current get-post variables,
-		// these can be overriden by setting them in the $vars array 
-		foreach ($this->gp as $key) {
-
-			if (array_key_exists($key, $vars))
-				$out[] = $key.'='.$vars[$key];
-
-			elseif ($value = gps($key))
+		if (!is_array($vars))
+			$vars = gpsa($this->gp);
+		else if ( $gp || !count($vars) )
+			$vars = array_merge(gpsa($this->gp), $vars);
+		
+		foreach ($vars as $key => $value)
+			{
+			if ( !empty( $value ) )
 				$out[] = $key.'='.$value;
+			}
+		
+		return serverSet('SCRIPT_NAME') . ( isset( $out ) 
+			? '?'.join('&', $out)
+			: '' );
 		}
 
-		return serverSet('SCRIPT_NAME').'?'.join('&#38;', $out);
-	}
+	function redirect( $vars='' ) 
+		{
+		/*
+		If $vars is an array, using url() to expand as an GET style url and redirects to 
+		that location.
+		*/
+
+		header('HTTP/1.1 303 See Other');
+		header('Status: 303');
+		header('Location: '.$this->url( $vars ) );
+		header('Connection: close');
+		}
 }
 
 class GBPAdminTabView {
@@ -313,7 +335,7 @@ class GBPAdminTabView {
 		$this->php_4_fix();
 
 		// Grab the url to this tab
-		$url = $this->parent->url(array(gbp_tab => $this->event));
+		$url = $this->parent->url(array(gbp_tab => $this->event), true);
 
 		// Will need updating if any improvements happen to the admin interface
 		$out[] = '<td class="' . ($this->is_active ? 'tabup' : 'tabdown2');
