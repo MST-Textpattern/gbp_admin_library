@@ -82,10 +82,15 @@ class GBPPlugin {
 				// Tabs should be loaded by now
 				if ($this->use_tabs) {
 
+					foreach (array_keys($this->tabs) as $key)
+						{
+						$tab = &$this->tabs[$key];
+						$tab->php_4_fix();
+						}
+
 					// Let the active_tab know it's active and call it's preload()
 					$tab = &$this->tabs[$this->active_tab];
 					$tab->is_active = 1;
-					$tab->php_4_fix();
 					$tab->preload();
 				}
 			}
@@ -331,8 +336,6 @@ class GBPAdminTabView {
 	}
 
 	function render_tab() {
-
-		$this->php_4_fix();
 
 		// Grab the url to this tab
 		$url = $this->parent->url(array(gbp_tab => $this->event), true);
