@@ -1,15 +1,6 @@
 <?php
 
-// This is a PLUGIN TEMPLATE.
-
-// Copy this file to a new name like abc_myplugin.php.  Edit the code, then
-// run this file at the command line to produce a plugin for distribution:
-// $ php abc_myplugin.php > abc_myplugin-0.1.txt
-
-// Plugin name is optional.  If unset, it will be extracted from the current
-// file name. Uncomment and edit this line to override:
-# $plugin['name'] = 'abc_plugin';
-
+$plugin['name'] = 'gbp_admin_library';
 $plugin['version'] = '0.2';
 $plugin['author'] = 'Graeme Porteous';
 $plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
@@ -20,9 +11,11 @@ $plugin['type'] = 2;
 
 if (0) {
 ?>
+<!--
 # --- BEGIN PLUGIN HELP ---
 
 # --- END PLUGIN HELP ---
+-->
 <?php
 }
 # --- BEGIN PLUGIN CODE ---
@@ -371,7 +364,7 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 		// Make txp_prefs.php happy :)
 		global $event;
 		$event = $this->parent->event;
-
+	
 		include_once txpath.'/include/txp_prefs.php';
 
 		echo
