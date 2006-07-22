@@ -392,7 +392,7 @@ class GBPAdminTabView {
 	//	Constructor
 	function GBPAdminTabView($title, $event, &$parent, $is_default = NULL) {
 
-		$this->title = $title;
+		$this->title = strtolower($title);
 		$this->event = $event;
 		
 		// Note: $this->parent only gets set correctly for PHP 5
