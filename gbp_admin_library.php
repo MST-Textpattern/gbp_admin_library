@@ -96,54 +96,139 @@ class GBPPlugin {
 			$this->load_preferences();
 	}
 
-	function load_preferences() {
-		
-		// Override the default values if the prefs have been stored in the preferences table
-		$prefs = safe_rows('SUBSTRING(`name` FROM LENGTH(\''.$this->plugin_name.'\')+2) as \'key\', val as value, html as type', 'txp_prefs', '`name` LIKE \''.$this->plugin_name.'_%\' AND `event` = \''.$this->event.'\'');
-		foreach ($prefs as $pref) {
-
-			extract($pref);
-
-			switch ($type) {
-				case 'gbp_array_text':
-					$value = gbp_convert_pref('gbp_array_text', $value);
-				break;
-				case 'gbp_serialized':
-					$value = gbp_convert_pref('gbp_serialized', $value);
-				break;
-			}
-
-			if (array_key_exists($key, $this->preferences))
-				$this->preferences[$key] = array('value' => $value, 'type' => $type);
-		}
-	}
-
-	function set_preference($key, $value) {
-
+	function load_preferences()
+		{
+		/*
+		Grab and store all preferences with event matching this plugin, combine gbp_partial
+		rows and decode the value if it's of custom type.
+		*/
 		global $prefs;
 
-		// Variables to be saved
-		$type = $this->preferences[$key]['type'];
-		$name = $this->plugin_name."_".$key;
+		// Override the default values if the prefs have been stored in the preferences table.
+		$preferences = safe_rows("name, name as base_name, html as 'type'",
+		'txp_prefs', "event = '{$this->event}' AND html <> 'gbp_partial'");
+
+		foreach ($preferences as $pref)
+			{
+			// Extract the name, base_name and type.
+			extract($pref);
+
+			// Combine the extended preferences, which go over two rows into one preference.
+			$i = 0; $value = '';
+			while (array_key_exists($name, $prefs))
+				{
+				$value .= $prefs[$name];
+				unset($prefs[$name]);
+				// Update name for the next array_key_exists check.
+				$name = $base_name.'_'.++$i;
+				}
+
+			// If this a custom type (E.g. gbp_serialized OR gbp_array_text)
+			// call it's db_get method to decode it's value.
+			if (is_callable(array(&$this, $type)))
+				$value = call_user_func(array(&$this, $type), 'db_get', $value);
+
+			// Re-set the combined and decoded value to the global prefs array.
+			$prefs[$base_name] = $value;
+
+			// If the preference exists in our preference array set the new value and correct type. 
+			$base_name = substr($base_name, strlen($this->plugin_name.'_'));
+			if (array_key_exists($base_name, $this->preferences))
+				$this->preferences[$base_name] = array('value' => $value, 'type' => $type);
+			}
+		}
+
+	function set_preference( $key, $value, $type='' )
+		{
+		global $prefs;
+
+		// Set some standard db fields
+		$base_name = $this->plugin_name.'_'.$key;
+		$name = $base_name;
 		$event = $this->event;
 
-		// Check to see if a preference already exists, update or insert accordingly
-		if (array_search($name, array_keys($prefs)) !== false)
-			safe_update(
-				'txp_prefs',
-				"`val` = '".doSlash($value)."'", "`name` = '$name' AND `event` = '$event'"
-			);
-		else
-			safe_insert(
-				'txp_prefs',
-				"`name` = '$name',`val` = '".doSlash($value)."', `event` = '$event', `html` = '$type', `prefs_id` = '1'"
-			);
+		// If a type hasn't been specified then look the key up in our preferences.
+		// Else assume it's type is 'text_input'.
+		if (empty($type) && array_key_exists($key, $this->preferences))
+			$type = $this->preferences[$key]['type'];
+		else if (empty($type))
+			$type = 'text_input';
 
-		// Converted value for the current prefs, so we don;t need to run load_preferences() again
-		$converted_value = gbp_convert_pref($type, $value);
-		$this->preferences[$key]['value'] = $converted_value;
-		$prefs[$name] = $converted_value;
-	}
+		// Set the new value to the global prefs array and if the preference exists 
+		// to our own preference array.
+		$prefs[$name] = $value;
+		if (array_key_exists($key, $this->preferences))
+			$this->preferences[$key] = array('value' => $value, 'type' => $type);
+
+		// If this preference has a custom type (E.g. gbp_serialized OR gbp_array_text)
+		// call it's db_set method to encode the value.
+		if (is_callable(array(&$this, $type)))
+			$value = call_user_func(array(&$this, $type), 'db_set', $value);
+
+		// It is possible to leave old 'gbp_partial' perferences when reducing the
+		// lenght of a preference. Remove them all.
+		safe_delete('txp_prefs', "event = '$event' AND name LIKE '$name%' AND html = 'gbp_partial'");
+
+		$i = 0; $value = doSlash($value);
+		// Limit preference to approximatly 4Kb of data. I hope this will be enough
+		while ( strlen($value) && $i < 16 )
+			{
+			// Grab the first 255 chars from the value and strip any backward slashes which
+			// cause the SQL to break. 
+			$value_segment = rtrim(substr($value, 0, 255), '\\');
+
+			// Set the preference and update name for the next array_key_exists check.
+			set_pref($name, $value_segment, $event, 2, ($i ? 'gbp_partial' : $type));
+			$name = $base_name.'_'.++$i;
+
+			// Remove the segment of the value which has been saved.
+			$value = substr_replace($value, '', 0, strlen($value_segment));
+			}
+		}
+
+	function gbp_serialized( $step, $value, $item='' )
+		{
+		switch ( strtolower($step) )
+			{
+			default:
+			case 'ui_in':
+				if (!is_array($value)) $value = array($value);
+				return text_input($item, implode(',', $value), 50);
+			break;
+			case 'ui_out':
+				return explode(',', $value);
+			break;
+			case 'db_set':
+				return serialize($value);
+			break;
+			case 'db_get':
+				return unserialize($value);
+			break;
+			}
+		return '';
+		}
+
+	function gbp_array_text( $step, $value, $item='' )
+		{
+		switch ( strtolower($step) )
+			{
+			default:
+			case 'ui_in':
+				if (!is_array($value)) $value = array($value);
+				return text_input($item, implode(',', $value), 50);
+			break;
+			case 'ui_out':
+				return explode(',', $value);
+			break;
+			case 'db_set':
+				return implode(',', $value);
+			break;
+			case 'db_get':
+				return explode(',', $value);
+			break;
+			}
+		return '';
+		}
 
 	function &add_tab($tab, $is_default = NULL) {
 
@@ -349,18 +434,23 @@ class GBPAdminTabView {
 
 class GBPPreferenceTabView extends GBPAdminTabView {
 	
-	function preload() {
-
-		if (ps('step') == 'prefs_save') {
-
-			foreach (array_keys($this->parent->preferences) as $key)
-				$this->parent->set_preference($key, ps($key));
-
+	function preload()
+		{
+		if (ps('step') == 'prefs_save')
+			{
+			foreach ($this->parent->preferences as $key => $pref)
+				{
+				extract($pref);
+				$value = ps($key);
+				if (is_callable(array(&$this->parent, $type)))
+					$value = call_user_func(array(&$this->parent, $type), 'ui_out', $value);
+				$this->parent->set_preference($key, $value);
+				}
+			}
 		}
-	}
 
-	function main() {
-
+	function main()
+		{
 		// Make txp_prefs.php happy :)
 		global $event;
 		$event = $this->parent->event;
@@ -371,24 +461,28 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 		'<form action="index.php" method="post">',
 		startTable('list');
 
-		foreach ($this->parent->preferences as $key => $pref) {
-
+		foreach ($this->parent->preferences as $key => $pref)
+			{
 			extract($pref);
 
 			$out = tda(gTxt($key), ' style="text-align:right;vertical-align:middle"');
 				
-			switch ($type) {
+			switch ($type)
+				{
 				case 'text_input':
 					$out .= td(pref_func('text_input', $key, $value, 20));
 				break;
 				default:
-					$out .= td(pref_func($type, $key, $value, 50));
+					if (is_callable(array(&$this->parent, $type)))
+						$out .= td(call_user_func(array(&$this->parent, $type), 'ui_in', $value, $key));
+					else
+						$out .= td(pref_func($type, $key, $value, 50));
 				break;
-			}
+				}
 			
 			$out.= tda($this->popHelp($key), ' style="vertical-align:middle"');			
 			echo tr($out);
-		}
+			}
 
 		echo
 		tr(tda(fInput('submit', 'Submit', gTxt('save_button'), 'publish'), ' colspan="3" class="noline"')),
@@ -396,39 +490,12 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 		$this->parent->form_inputs(),
 		sInput('prefs_save'),
 		'</form>';
-	}
+		}
 
-	function popHelp($helpvar) {
-
+	function popHelp($helpvar)
+		{
 		return '<a href="'.serverSet('SCRIPT_NAME').'?event=plugin&step=plugin_help&name='.$this->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
-	}
-}
-
-function gbp_convert_pref($type, $value, $encode = NULL) {
-
-	// Basic converting/encoding functions, so we can store the data correctly is the db
-	switch ($type) {
-		case 'gbp_array_text':
-			return ($encode)
-				? implode(',', $value)
-				: explode(',', $value);
-		case 'gbp_serialized':
-			return ($encode)
-				? serialize($value)
-				: unserialize($value);
-		break;
-	}
-	return $value;
-}
-
-function gbp_array_text($item, $var, $size = '') {
-
-	return text_input($item, gbp_convert_pref('gbp_array_text', $var, 1), $size);
-}
-
-function gbp_serialized($item, $var, $size = '') {
-
-	return text_input($item, gbp_convert_pref('gbp_serialized', $var, 1), $size);
+		}
 }
 
 # --- END PLUGIN CODE ---
