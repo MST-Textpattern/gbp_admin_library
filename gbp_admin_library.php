@@ -380,6 +380,17 @@ class GBPPlugin {
 		header('Location: '.$this->url( $vars ) );
 		header('Connection: close');
 		}
+
+	function pref( $key )
+		{
+		global $prefs;
+		$key = $this->plugin_name.'_'.$key;
+		if (@$this->preferences[$key])
+			return $this->preferences[$key]['value'];
+		if (@$prefs[$key])
+			return $prefs[$key];
+		return NULL;
+		}
 }
 
 class GBPAdminTabView {
@@ -429,6 +440,26 @@ class GBPAdminTabView {
 	function main() {
 
 		// Override this function
+	}
+
+	function pref( $key )
+	{
+	return $this->parent->pref($key);
+	}
+
+	function set_preference( $key, $value, $type='' )
+	{
+	return $this->parent->set_preference($key, $value, $type);
+	}
+
+	function url( $vars, $gp )
+	{
+	return $this->parent->url($vars, $gp);
+	}
+
+	function form_inputs()
+	{
+	return $this->parent->form_inputs();
 	}
 }
 
