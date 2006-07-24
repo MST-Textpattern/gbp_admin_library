@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 $plugin['name'] = 'gbp_admin_library';
 $plugin['version'] = '0.2';
@@ -407,7 +407,8 @@ class GBPAdminTabView {
 	//	Constructor
 	function GBPAdminTabView($title, $event, &$parent, $is_default = NULL) {
 
-		$this->title = strtolower($title);
+		$this->title = mb_convert_case( $title, MB_CASE_LOWER, "UTF-8" );
+
 		$this->event = $event;
 		
 		// Note: $this->parent only gets set correctly for PHP 5
