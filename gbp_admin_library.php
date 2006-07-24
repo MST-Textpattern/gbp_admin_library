@@ -5,7 +5,11 @@ $plugin['version'] = '0.2';
 $plugin['author'] = 'Graeme Porteous';
 $plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
 $plugin['description'] = 'GBP\'s Admin-Side Library';
-$plugin['type'] = 2; 
+$plugin['type'] = 2;
+
+$plugin['url'] = '$HeadURL$';
+$plugin['date'] = '$LastChangedDate$';
+$plugin['revision'] = '$LastChangedRevision$';
 
 @include_once('../zem_tpl.php');
 
