@@ -452,7 +452,7 @@ class GBPAdminTabView {
 	return $this->parent->set_preference($key, $value, $type);
 	}
 
-	function url( $vars, $gp )
+	function url( $vars, $gp=false )
 	{
 	return $this->parent->url($vars, $gp);
 	}
