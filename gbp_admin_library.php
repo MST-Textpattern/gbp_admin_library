@@ -94,7 +94,7 @@ class GBPPlugin {
 
 			// Call txp functions to register this plugin
 			register_tab($parent_tab, $event, $title);
-			register_callback(array($this, 'render'), $event, null, 0);
+			register_callback(array(&$this, 'render'), $event, null, 0);
 		}
 		if (@txpinterface == 'public')
 			$this->load_preferences();
