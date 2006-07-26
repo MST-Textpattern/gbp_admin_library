@@ -196,7 +196,7 @@ class GBPPlugin {
 	function remove_preference( $key )
 		{
 		$event = $this->event;
-		safe_delete('txp_prefs', "event = '$event' AND ((name LIKE '$key') OR (name LIKE '{$key}_%' AND html = 'gbp_partial'))", 1);
+		safe_delete('txp_prefs', "event = '$event' AND ((name LIKE '$key') OR (name LIKE '{$key}_%' AND html = 'gbp_partial'))");
 		}
 
 	function gbp_serialized( $step, $value, $item='' )
