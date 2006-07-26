@@ -15,7 +15,21 @@ $plugin['revision'] = '$LastChangedRevision$';
 
 if (0) {
 ?>
-<!--
+<!-- CSS SECTION
+# --- BEGIN PLUGIN CSS ---
+<style type="text/css">
+div#l10n_help td { vertical-align:top; }
+div#l10n_help code { font-weight:bold; font: 105%/130% "Courier New", courier, monospace; background-color: #FFFFCC;}
+div#l10n_help code.sed_code_tag { font-weight:normal; border:1px dotted #999; background-color: #f0e68c; display:block; margin:10px 10px 20px; padding:10px; }
+div#l10n_help a:link, div#l10n_help a:visited { color: blue; text-decoration: none; border-bottom: 1px solid blue; padding-bottom:1px;}
+div#l10n_help a:hover, div#l10n_help a:active { color: blue; text-decoration: none; border-bottom: 2px solid blue; padding-bottom:1px;}
+div#l10n_help h1 { color: #369; font: 20px Georgia, sans-serif; margin: 0; text-align: center; }
+div#l10n_help h2 { border-bottom: 1px solid black; padding:10px 0 0; color: #369; font: 17px Georgia, sans-serif; }
+div#l10n_help h3 { color: #693; font: bold 12px Arial, sans-serif; letter-spacing: 1px; margin: 10px 0 0;text-transform: uppercase;}
+</style>
+# --- END PLUGIN CSS ---
+-->
+<!-- HELP SECTION
 # --- BEGIN PLUGIN HELP ---
 
 # --- END PLUGIN HELP ---
@@ -466,7 +480,7 @@ class GBPAdminTabView {
 	return $this->parent->set_preference($key, $value, $type);
 	}
 
-	function remove_preference( $key, )
+	function remove_preference( $key )
 	{
 	return $this->parent->remove_preference($key);
 	}
