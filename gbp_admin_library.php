@@ -41,7 +41,7 @@ class GBPPlugin {
 	var $preferences = array();
 
 	// Constructor
-	function GBPPlugin($title, $event, $parent_tab = 'extensions') {
+	function GBPPlugin($title = '', $event = '', $parent_tab = '') {
 
 		global $txp_current_plugin;
 
@@ -63,8 +63,8 @@ class GBPPlugin {
 			$this->title = $title;
 
 			// The parent_tab can only be one of four things, make sure it is
-			$parent_tab = ($parent_tab != 'content' AND $parent_tab != 'presentation' AND $parent_tab != 'admin' AND $parent_tab != 'extensions')
-				? 'extensions' : $parent_tab;
+			if ($event AND $title AND $parent_tab AND array_search($parent_tab, array('content', 'presentation', 'admin', 'extensions')) == false)
+				$parent_tab = 'extensions';
 
 			// Set up the get-post array
 			$this->gp = array_merge(array('event', gbp_tab), $this->gp);
@@ -77,7 +77,7 @@ class GBPPlugin {
 				$this->preload();
 
 				// Tabs should be loaded by now
-				if ($this->use_tabs) {
+				if ($parent_tab && $this->use_tabs) {
 
 					foreach (array_keys($this->tabs) as $key)
 						{
@@ -93,8 +93,11 @@ class GBPPlugin {
 			}
 
 			// Call txp functions to register this plugin
-			register_tab($parent_tab, $event, $title);
-			register_callback(array(&$this, 'render'), $event, null, 0);
+			if ($parent_tab)
+			{
+				register_tab($parent_tab, $event, $title);
+				register_callback(array(&$this, 'render'), $event, null, 0);
+			}
 		}
 		if (@txpinterface == 'public')
 			$this->load_preferences();
@@ -171,7 +174,7 @@ class GBPPlugin {
 
 		// It is possible to leave old 'gbp_partial' perferences when reducing the
 		// lenght of a preference. Remove them all.
-		safe_delete('txp_prefs', "event = '$event' AND name LIKE '$name%' AND html = 'gbp_partial'");
+		$this->remove_preference($name);
 
 		$i = 0; $value = doSlash($value);
 		// Limit preference to approximatly 4Kb of data. I hope this will be enough
@@ -188,6 +191,12 @@ class GBPPlugin {
 			// Remove the segment of the value which has been saved.
 			$value = substr_replace($value, '', 0, strlen($value_segment));
 			}
+		}
+
+	function remove_preference( $key )
+		{
+		$event = $this->event;
+		safe_delete('txp_prefs', "event = '$event' AND ((name LIKE '$key') OR (name LIKE '{$key}_%' AND html = 'gbp_partial'))", 1);
 		}
 
 	function gbp_serialized( $step, $value, $item='' )
@@ -455,6 +464,11 @@ class GBPAdminTabView {
 	function set_preference( $key, $value, $type='' )
 	{
 	return $this->parent->set_preference($key, $value, $type);
+	}
+
+	function remove_preference( $key, )
+	{
+	return $this->parent->remove_preference($key);
 	}
 
 	function url( $vars, $gp=false )
