@@ -85,7 +85,7 @@ class GBPPlugin {
 			$this->title = $title;
 
 			// The parent_tab can only be one of four things, make sure it is
-			if ($event AND $title AND $parent_tab AND array_search($parent_tab, array('content', 'presentation', 'admin', 'extensions')) == false)
+			if ($event AND $title AND $parent_tab AND array_search($parent_tab, array('content', 'presentation', 'admin', 'extensions')) === false)
 				$parent_tab = 'extensions';
 
 			// Set up the get-post array
