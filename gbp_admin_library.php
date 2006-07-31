@@ -134,13 +134,24 @@ class GBPPlugin {
 		global $prefs;
 
 		// Override the default values if the prefs have been stored in the preferences table.
-		$preferences = safe_rows("name, name as base_name, html as 'type'",
+		$preferences = safe_rows("name, html as type",
 		'txp_prefs', "event = '{$this->event}' AND html <> 'gbp_partial'");
 
-		foreach ($preferences as $pref)
+		// Add the default preferences which aren't saved in the db but defined in the plugin's source.
+		foreach ($this->preferences as $key => $pref)
 			{
-			// Extract the name, base_name and type.
+			$db_pref = array('name' => $this->plugin_name.'_'.$key, 'type' => $pref['type']);
+			if (array_search($db_pref, $preferences) === false)
+				$preferences[] = $db_pref + array('default_value' => $pref['value']);
+			}
+
+		foreach ($preferences as $name => $pref)
+			{
+			// Extract the name and type.
 			extract($pref);
+
+			// The base name which gbp_partial preferences could share.
+			$base_name = $name;
 
 			// Combine the extended preferences, which go over two rows into one preference.
 			$i = 0; $value = '';
@@ -152,9 +163,13 @@ class GBPPlugin {
 				$name = $base_name.'_'.++$i;
 				}
 
-			// If this a custom type (E.g. gbp_serialized OR gbp_array_text)
+			// If there is no value then revert to the default value if it exists.
+			if ((!$value || (@!$value[0] && count($value) <= 1)) && isset($default_value))
+				$value = $default_value;
+
+			// Else if this a custom type (E.g. gbp_serialized OR gbp_array_text)
 			// call it's db_get method to decode it's value.
-			if (is_callable(array(&$this, $type)))
+			else if (is_callable(array(&$this, $type)))
 				$value = call_user_func(array(&$this, $type), 'db_get', $value);
 
 			// Re-set the combined and decoded value to the global prefs array.
@@ -198,6 +213,10 @@ class GBPPlugin {
 		// lenght of a preference. Remove them all.
 		$this->remove_preference($name);
 
+		// Make sure preferences which equal NULL are saved
+		if (empty($value))
+			set_pref($name, '', $event, 2, $type);
+
 		$i = 0; $value = doSlash($value);
 		// Limit preference to approximatly 4Kb of data. I hope this will be enough
 		while ( strlen($value) && $i < 16 )
@@ -207,7 +226,6 @@ class GBPPlugin {
 			$value_segment = rtrim(substr($value, 0, 255), '\\');
 
 			// Set the preference and update name for the next array_key_exists check.
-			set_pref($name, $value_segment, $event, 2, ($i ? 'gbp_partial' : $type));
 			$name = $base_name.'_'.++$i;
 
 			// Remove the segment of the value which has been saved.
