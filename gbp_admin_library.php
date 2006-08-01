@@ -226,6 +226,7 @@ class GBPPlugin {
 			$value_segment = rtrim(substr($value, 0, 255), '\\');
 
 			// Set the preference and update name for the next array_key_exists check.
+			set_pref($name, $value_segment, $event, 2, ($i ? 'gbp_partial' : $type));
 			$name = $base_name.'_'.++$i;
 
 			// Remove the segment of the value which has been saved.
