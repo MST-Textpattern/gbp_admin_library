@@ -457,8 +457,7 @@ class GBPAdminTabView {
 	//	Constructor
 	function GBPAdminTabView($title, $event, &$parent, $is_default = NULL) {
 
-		$this->title = mb_convert_case( $title, MB_CASE_LOWER, "UTF-8" );
-
+		$this->title = $title;
 		$this->event = $event;
 		
 		// Note: $this->parent only gets set correctly for PHP 5
