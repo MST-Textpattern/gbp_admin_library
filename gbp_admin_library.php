@@ -371,9 +371,12 @@ class GBPPlugin {
 	function render_footer() {
 
 		// A simple footer
+		global $plugins_ver;
 		$out[] = '</div>';
 		$out[] = '<div style="padding-top: 3em; text-align: center; clear: both;">';
 		$out[] = $this->plugin_name;
+		if (@$plugins_ver[$this->plugin_name])
+		 	$out[] = ' &#183; ' . $plugins_ver[$this->plugin_name];
 		$out[] = '</div>';
 
 		echo join('', $out);
