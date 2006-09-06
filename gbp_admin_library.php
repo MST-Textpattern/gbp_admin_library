@@ -686,7 +686,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 			case 'setup':
 			// Render the post-setup screen...
 				$out[] = hed( 'Setup Report&#8230;' , 1 );
-				$out[] = tag( tag( join( n , $this->wizard_report ) , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
+				$out[] = tag( $this->wizard_report() , 'fieldset' );
 				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . eInput($this->parent->event) . hInput(gbp_tab, 'preference') );
 			break;
 
@@ -707,7 +707,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 			case 'cleanup':
 			// Render the post-cleanup screen...
 				$out[] = hed( "Cleanup Report&#8230;" , 1 );
-				$out[] = tag( tag( join( n , $this->wizard_report ) , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
+				$out[] = tag( $this->wizard_report() , 'fieldset' );
 				$out[] = graf( 'The plugin can now be disabled and uninstalled.' );
 				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . eInput( 'plugin' ) );
 			break;
@@ -722,13 +722,47 @@ class GBPWizardTabView extends GBPAdminTabView {
 		return $this->parent->installed();
 		}
 
-	function add_report_item( $string , $ok )
+	function wizard_report()
 		{
-		$class  = ($ok===true) ? 'success' : 'failure';
-		$okfail = ($ok===true) ? gTxt('l10n-done') : gTxt('l10n-failed');
-		$okfail = '<span class="'.$class.'">'.tag( $okfail, 'strong' ).'</span>';
-		$line = graf( $string . ' : ' . $okfail );
-		$this->wizard_report[] = tag( $line , 'li' );
+		// Render the wizard report as an ordered list. There maybe 
+		// 'sub' reports which we need to also render as ordered lists
+		$out = array();
+		foreach ($this->wizard_report as $report)
+			{
+			$out_sub = array();
+			
+			// Skip the first element as it is in fact the parent report
+			next($report);
+			
+			// Lets generate a sub report - if there are more elements
+			while (list($key, $report_sub) = each($report))
+				$out_sub[] = tag( $report_sub , 'li' );
+
+			// Check to see if we actually have a sub report - tag it as necessary 
+			$out_sub = ( count($out_sub) > 0 )
+			? tag( join( n , $out_sub ), 'ol' )
+			: '';
+			
+			$out[] = tag( $report[0] . $out_sub , 'li' );
+			}
+		return tag( join( n , $out ) , 'ol', ' style="text-align: left; padding-top: 0.75em;"' );
+		}
+
+	function add_report_item( $string , $ok = NULL, $sub = false )
+		{
+		if( isset($ok) )
+			{
+			$class  = ($ok===true) ? 'success' : 'failure';
+			$okfail = ($ok===true) ? gTxt('l10n-done') : gTxt('l10n-failed');
+			$okfail = ' : <span class="'.$class.'">'.tag( $okfail, 'strong' ).'</span>';
+			}
+
+		$line = graf( $string . (isset($okfail) ? $okfail : '') );
+
+		if ($sub && count( $this->wizard_report ) > 0)
+			$this->wizard_report[count( $this->wizard_report ) - 1][] = $line;
+		else
+			$this->wizard_report[] = array( $line );
 		}
 
 	function setup_test()
