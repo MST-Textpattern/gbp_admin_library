@@ -290,6 +290,26 @@ class GBPPlugin {
 		if (($is_default && !gps(gbp_tab)) || (gps(gbp_tab) == $tab->event))
 			$this->active_tab = count($this->tabs);
 
+		if (strtolower(get_parent_class($tab)) == 'gbpwizardtabview')
+			{
+			$tab->parent = &$this;
+			
+			// Wizard routines
+			$step = gps('step');
+			if( in_array( $step, array( 'setup', 'cleanup' ) ) )
+				{
+				$installation_steps = ($step == 'setup')
+				? array_keys( $tab->installation_steps )
+				: array_reverse( array_keys( $tab->installation_steps ) );
+				foreach ( $installation_steps as $key)
+					{
+					$function = array( &$tab, $step.'_'.$key );
+					if ( is_callable( $function ) )
+						call_user_func( $function );
+					}
+				}
+			}
+
 		// Store the tab
 		$this->tabs[] = $tab;
 
@@ -448,6 +468,11 @@ class GBPPlugin {
 			return $prefs[$key];
 		return NULL;
 		}
+
+	function installed()
+		{
+		return true;
+		}
 }
 
 class GBPAdminTabView {
@@ -501,7 +526,12 @@ class GBPAdminTabView {
 
 	function pref( $key )
 	{
-	return $this->parent->pref($key);
+	return @$this->parent->pref($key);
+	}
+
+	function redirect( $vars='' )
+	{
+	$this->parent->redirect($vars);
 	}
 
 	function set_preference( $key, $value, $type='' )
@@ -588,6 +618,97 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 	function popHelp($helpvar)
 		{
 		return '<a href="'.serverSet('SCRIPT_NAME').'?event=plugin&step=plugin_help&name='.$this->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
+		}
+}
+
+class GBPWizardTabView extends GBPAdminTabView {
+
+	var $installation_steps = array(
+		'test' => array('setup' => 'Test setup', 'cleanup' => 'Test cleanup'),
+	);
+	var $wizard_report = array();
+
+	function main()
+		{
+		$out[] = '<style type="text/css"> .success { color: #009900; } .failure { color: #FF0000; } </style>';
+		$out[] = '<div style="border: 1px solid gray; width: 50em; text-align: center; margin: 1em auto; padding: 1em; clear: both;">';
+
+		$step = gps('step');
+		if (empty($step))
+			$step = ($this->installed()) ? 'cleanup-verify' : 'setup-verify';
+
+		switch ( $step )
+			{
+			case 'setup-verify':
+			// Render the setup wizard initial step...
+				$out[] = hed( 'Setup' , 1 );
+				$out[] = graf( 'The following setup steps are going to be done&#8230;' );
+				foreach (array_values($this->installation_steps) as $detail)
+					if (@$detail['setup'])
+						@$step_details .= tag($detail['setup'], 'li');
+				$out[] = tag( tag( $step_details , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
+				$out[] = form(
+					fInput('submit', '', gTxt('Setup'), '') .
+					$this->form_inputs() . sInput( 'setup' ) ,
+				'' , "verify('".doSlash(gTxt('are_you_sure'))."')" );
+			break;
+
+			case 'setup':
+			// Render the post-setup screen...
+				$out[] = hed( 'Setup Report&#8230;' , 1 );
+				$out[] = tag( tag( join( n , $this->wizard_report ) , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
+				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . eInput($this->parent->event) . hInput(gbp_tab, 'preference') );
+			break;
+
+			case 'cleanup-verify':
+			// Render the cleanup wizard initial step...
+				$out[] = hed( 'Cleanup' , 1 );
+				$out[] = graf( 'The following cleanup steps are going to be done&#8230;' );
+				foreach (array_values(array_reverse($this->installation_steps)) as $detail)
+					if (@$detail['cleanup'])
+						@$step_details .= tag($detail['cleanup'], 'li');
+				$out[] = tag( tag( $step_details , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
+				$out[] = form(
+					fInput('submit', '', gTxt('Cleanup'), '') .
+					$this->form_inputs() . sInput( 'cleanup' ) ,
+				'' , "verify('".doSlash(gTxt('are_you_sure'))."')" );
+			break;
+
+			case 'cleanup':
+			// Render the post-cleanup screen...
+				$out[] = hed( "Cleanup Report&#8230;" , 1 );
+				$out[] = tag( tag( join( n , $this->wizard_report ) , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
+				$out[] = graf( 'The plugin can now be disabled and uninstalled.' );
+				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . eInput( 'plugin' ) );
+			break;
+			}
+
+		$out[] = '</div>';
+		echo join(n, $out);
+		}
+
+	function installed()
+		{
+		return $this->parent->installed();
+		}
+
+	function add_report_item( $string , $ok )
+		{
+		$class  = ($ok===true) ? 'success' : 'failure';
+		$okfail = ($ok===true) ? gTxt('l10n-done') : gTxt('l10n-failed');
+		$okfail = '<span class="'.$class.'">'.tag( $okfail, 'strong' ).'</span>';
+		$line = graf( $string . ' : ' . $okfail );
+		$this->wizard_report[] = tag( $line , 'li' );
+		}
+
+	function setup_test()
+		{
+		$this->add_report_item('foo', true);
+		}
+
+	function cleanup_test()
+		{
+		$this->add_report_item('bar', false);
 		}
 }
 
