@@ -574,6 +574,12 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 
 	var $permissions = 'prefs';
 
+	function GBPPreferenceTabView(&$parent, $is_default = NULL)
+		{
+			// Call the parent constructor
+			GBPAdminTabView::GBPAdminTabView( gTxt('tab_preferences'), 'preference', $parent, $is_default );
+		}
+
 	function preload()
 		{
 		if (ps('step') == 'prefs_save')
@@ -645,6 +651,12 @@ class GBPWizardTabView extends GBPAdminTabView {
 	);
 	var $wizard_report = array();
 	var $permissions = 'admin.edit';
+
+	function GBPWizardTabView(&$parent, $is_default = NULL)
+		{
+			// Call the parent constructor
+			GBPAdminTabView::GBPAdminTabView( 'Wizards', 'wizard', $parent, $is_default );
+		}
 
 	function main()
 		{
