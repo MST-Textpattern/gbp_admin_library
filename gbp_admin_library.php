@@ -58,7 +58,7 @@ class GBPPlugin {
 	var $message = '';
 	var $tabs = array();
 	var $active_tab = 0;
-	var $use_tabs = 0;
+	var $use_tabs = false;
 	var $gp = array();
 	var $preferences = array();
 	var $permissions = '1,2,3,4,5,6';
@@ -320,7 +320,7 @@ class GBPPlugin {
 		$this->tabs[] = $tab;
 
 		// We've got a tab, lets assume we want to use it
-		$this->use_tabs = 1;
+		$this->use_tabs = true;
 		
 		return $this;
 	}
@@ -675,7 +675,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 				$out[] = graf( 'The following setup steps are going to be done&#8230;' );
 				foreach (array_values($this->installation_steps) as $detail)
 					if (@$detail['setup'])
-						@$step_details .= tag($detail['setup'], 'li');
+						@$step_details .= n.tag(graf($detail['setup']), 'li');
 				$out[] = tag( tag( $step_details , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
 				$out[] = form(
 					fInput('submit', '', gTxt('Setup'), '') .
@@ -696,7 +696,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 				$out[] = graf( 'The following cleanup steps are going to be done&#8230;' );
 				foreach (array_values(array_reverse($this->installation_steps)) as $detail)
 					if (@$detail['cleanup'])
-						@$step_details .= tag($detail['cleanup'], 'li');
+						@$step_details .= n.tag(graf($detail['cleanup']), 'li');
 				$out[] = tag( tag( $step_details , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
 				$out[] = form(
 					fInput('submit', '', gTxt('Cleanup'), '') .
