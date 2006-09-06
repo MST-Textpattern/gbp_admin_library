@@ -61,6 +61,7 @@ class GBPPlugin {
 	var $use_tabs = 0;
 	var $gp = array();
 	var $preferences = array();
+	var $permissions = '1,2,3,4,5,6';
 
 	// Constructor
 	function GBPPlugin($title = '', $event = '', $parent_tab = '') {
@@ -76,6 +77,11 @@ class GBPPlugin {
 
 		// When making a GBPAdminView there must be event attributes
 		$this->event = $event;
+
+		// Add privs for this event
+		global $txp_permissions;
+		$perms = @$txp_permissions[$this->permissions];
+		add_privs($this->event, ($perms ? $perms : $this->permissions));
 
 		if (@txpinterface == 'admin')
 		{
@@ -385,7 +391,10 @@ class GBPPlugin {
 
 		// Call main() for the active_tab
 		$tab = &$this->tabs[$this->active_tab];
-		$tab->main();
+		if (has_privs($this->event.'.'.$tab->event))
+			$tab->main();
+		else
+			echo '<p style="margin-top:3em;text-align:center">'.gTxt('restricted_area').'</p>';
 	}
 
 	function render_footer() {
@@ -481,6 +490,7 @@ class GBPAdminTabView {
 	var $event;
 	var $is_active;
 	var $parent;
+	var $permissions = '1,2,3,4,5,6';
 
 	//	Constructor
 	function GBPAdminTabView($title, $event, &$parent, $is_default = NULL) {
@@ -490,6 +500,11 @@ class GBPAdminTabView {
 		
 		// Note: $this->parent only gets set correctly for PHP 5
 		$this->parent =& $parent->add_tab($this, $is_default);
+
+		// Add privs for this tab
+		global $txp_permissions;
+		$perms = @$txp_permissions[$this->permissions];
+		add_privs($this->parent->event.'.'.$this->event, ($perms ? $perms : $this->permissions));
 	}
 	
 	function php_4_fix() {
@@ -556,7 +571,9 @@ class GBPAdminTabView {
 }
 
 class GBPPreferenceTabView extends GBPAdminTabView {
-	
+
+	var $permissions = 'prefs';
+
 	function preload()
 		{
 		if (ps('step') == 'prefs_save')
@@ -627,6 +644,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 		'test' => array('setup' => 'Test setup', 'cleanup' => 'Test cleanup'),
 	);
 	var $wizard_report = array();
+	var $permissions = 'admin.edit';
 
 	function main()
 		{
