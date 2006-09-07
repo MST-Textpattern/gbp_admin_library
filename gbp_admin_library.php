@@ -62,6 +62,8 @@ class GBPPlugin {
 	var $gp = array();
 	var $preferences = array();
 	var $permissions = '1,2,3,4,5,6';
+	var $wizard_key;
+	var $wizard_installed = false;
 
 	// Constructor
 	function GBPPlugin($title = '', $event = '', $parent_tab = '') {
@@ -111,7 +113,15 @@ class GBPPlugin {
 						{
 						$tab = &$this->tabs[$key];
 						$tab->php_4_fix();
+						if (strtolower(get_parent_class($tab)) == 'gbpwizardtabview')
+							{
+							$this->wizard_key = $key;
+							$this->wizard_installed = $tab->installed();
+							}
 						}
+
+					if (!$this->wizard_installed && $this->wizard_key)
+						$this->active_tab = $this->wizard_key;
 
 					// Let the active_tab know it's active and call it's preload()
 					$tab = &$this->tabs[$this->active_tab];
@@ -368,12 +378,19 @@ class GBPPlugin {
 		$out[] = '<tr><td align="center" class="tabs">';
 		$out[] = '<table cellpadding="0" cellspacing="0" align="center"><tr>';
 
-		foreach (array_keys($this->tabs) as $key) {
-
-			// Render each tab bu tkeep a reference to the tab so any changes made are store
-			$tab = &$this->tabs[$key];
+		// Force the wizard to be the only tab if the plugin isn't installed
+		if( $this->wizard_installed || !$this->wizard_key )
+			foreach (array_keys($this->tabs) as $key)
+				{
+				// Render each tab bu tkeep a reference to the tab so any changes made are store
+				$tab = &$this->tabs[$key];
+				$out[] = $tab->render_tab();
+				}
+		else
+			{
+			$tab = &$this->tabs[$this->wizard_key];
 			$out[] = $tab->render_tab();
-		}
+			}
 
 		$out[] = '</tr></table>';
 		$out[] = '</td></tr>';
@@ -391,7 +408,7 @@ class GBPPlugin {
 
 		// Call main() for the active_tab
 		$tab = &$this->tabs[$this->active_tab];
-		if (has_privs($this->event.'.'.$tab->event))
+		if (($this->wizard_installed || !$this->wizard_key || $tab->event == 'wizard') && has_privs($this->event.'.'.$tab->event))
 			$tab->main();
 		else
 			echo '<p style="margin-top:3em;text-align:center">'.gTxt('restricted_area').'</p>';
@@ -476,11 +493,6 @@ class GBPPlugin {
 		if (@$prefs[$key])
 			return $prefs[$key];
 		return NULL;
-		}
-
-	function installed()
-		{
-		return true;
 		}
 }
 
@@ -719,7 +731,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 	function installed()
 		{
-		return $this->parent->installed();
+		return false;
 		}
 
 	function wizard_report()
