@@ -200,12 +200,16 @@ class GBPPlugin {
 
 	function set_preference( $key, $value, $type='' )
 		{
-		global $prefs;
+		global $prefs, $txp_current_plugin;
+
+		// If the plugin_name or event isn't set is it safe to assume 
+		// $txp_current_plugin and gps('event') are correct?
+		$plugin = ($this->plugin_name) ? $this->plugin_name : $txp_current_plugin;
+		$event = ($this->event) ? $this->event : gps('event');
 
 		// Set some standard db fields
-		$base_name = $this->plugin_name.'_'.$key;
+		$base_name = $plugin.'_'.$key;
 		$name = $base_name;
-		$event = $this->event;
 
 		// If a type hasn't been specified then look the key up in our preferences.
 		// Else assume it's type is 'text_input'.
@@ -486,8 +490,11 @@ class GBPPlugin {
 
 	function pref( $key )
 		{
-		global $prefs;
-		$key = $this->plugin_name.'_'.$key;
+		global $prefs, $txp_current_plugin;
+
+		$plugin = ($this->plugin_name) ? $this->plugin_name : $txp_current_plugin;
+		$key = $plugin.'_'.$key;
+
 		if (@$this->preferences[$key])
 			return $this->preferences[$key]['value'];
 		if (@$prefs[$key])
