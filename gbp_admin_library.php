@@ -475,17 +475,37 @@ class GBPPlugin {
 			: '' );
 		}
 
-	function redirect( $vars='' ) 
+	function redirect( $url='', $status=303 ) 
 		{
 		/*
-		If $vars is an array, using url() to expand as an GET style url and redirects to 
-		that location.
+		If $vars is an array, use url() to expand as an GET style url and redirect to 
+		that location using the HTTP status code definition defined by $status.
 		*/
 
-		header('HTTP/1.1 303 See Other');
-		header('Status: 303');
-		header('Location: '.$this->url( $vars ) );
+		static $status_definitions = array (
+			301 => "Moved Permanently",
+			302 => "Found",
+			303 => "See Other",
+			307 => "Temporary Redirect"
+		);
+
+		if ( !in_array($status, array_keys($status_definitions)) )
+			$status = 303;
+
+		if ( is_array($url) )
+			$url = $this->url( $url );
+		else
+			{
+			$url_details = parse_url($url);
+			if (!@$url_details['scheme'])
+				$url = 'http://'.$url;
+			}
+
+		header('HTTP/1.1 '.$status.' '.$status_definitions[$status]);
+		header('Status: '.$status);
+		header('Location: '.$url);
 		header('Connection: close');
+		exit(0);
 		}
 
 	function pref( $key )
