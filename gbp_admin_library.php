@@ -475,8 +475,12 @@ class GBPPlugin {
 			if ( !empty( $value ) )
 				$out[] = $key.'='.$value;
 			}
-		
-		return serverSet('SCRIPT_NAME') . ( isset( $out ) 
+
+		$script = isset($_SERVER['SCRIPT_NAME'])
+		? serverSet('SCRIPT_NAME')
+		: serverSet('PHP_NAME');
+
+		return $script . ( isset( $out ) 
 			? '?'.join('&', $out)
 			: '' );
 		}
@@ -685,7 +689,10 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 
 	function popHelp($helpvar)
 		{
-		return '<a href="'.serverSet('SCRIPT_NAME').'?event=plugin&step=plugin_help&name='.$this->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
+		$script = isset($_SERVER['SCRIPT_NAME'])
+		? serverSet('SCRIPT_NAME')
+		: serverSet('PHP_NAME');
+		return '<a href="'.$script.'?event=plugin&step=plugin_help&name='.$this->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
 		}
 }
 
