@@ -113,7 +113,7 @@ class GBPPlugin {
 						{
 						$tab = &$this->tabs[$key];
 						$tab->php_4_fix();
-						if (strtolower(get_parent_class($tab)) == 'gbpwizardtabview')
+						if (is_a($tab, 'GBPWizardTabView'))
 							{
 							$this->wizard_key = $key;
 							$this->wizard_installed = $tab->installed();
@@ -310,7 +310,7 @@ class GBPPlugin {
 		if (($is_default && !gps(gbp_tab)) || (gps(gbp_tab) == $tab->event))
 			$this->active_tab = count($this->tabs);
 
-		if (strtolower(get_parent_class($tab)) == 'gbpwizardtabview')
+		if (is_a($tab, 'GBPWizardTabView'))
 			{
 			$tab->parent = &$this;
 			
@@ -325,7 +325,13 @@ class GBPPlugin {
 					{
 					$function = array( &$tab, $step.'_'.$key );
 					if ( is_callable( $function ) )
-						call_user_func( $function );
+						{
+						$optional = @$tab->installation_steps[$key]['optional'];
+						if ( ($optional && gps('optional_'.$key)) || !$optional )
+							call_user_func( $function );
+						else
+							$tab->add_report_item($tab->installation_steps[$key][$step], 'skipped');
+						}
 					}
 				}
 			}
@@ -686,7 +692,9 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 class GBPWizardTabView extends GBPAdminTabView {
 
 	var $installation_steps = array(
-		'test' => array('setup' => 'Test setup', 'cleanup' => 'Test cleanup'),
+		'basic' => array('setup' => 'Basic setup step', 'cleanup' => 'Basic cleanup step'),
+		'optional' => array('setup' => 'Optional setup step', 'cleanup' => 'Optional cleanup step', 'optional' => true),
+		'has_options' => array('setup' => 'Setup step with a option', 'cleanup' => 'Cleanup step with a option', 'has_options' => true),
 	);
 	var $wizard_report = array();
 	var $permissions = 'admin.edit';
@@ -743,8 +751,10 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 	function main()
 		{
-		$out[] = '<style type="text/css"> .success { color: #009900; } .failure { color: #FF0000; } </style>';
+		$out[] = '<style type="text/css"> .success { color: #009900; } .failure { color: #FF0000; } .skipped { color: #0000FF; } </style>';
 		$out[] = '<div style="border: 1px solid gray; width: 50em; text-align: center; margin: 1em auto; padding: 1em; clear: both;">';
+
+		$feaildset_style = ' style="text-align: left; padding: 1em 0"';
 
 		$step = gps('step');
 		if (empty($step))
@@ -754,6 +764,8 @@ class GBPWizardTabView extends GBPAdminTabView {
 				$step = 'version_error';
 			else
 				$step = ($this->installed()) ? 'cleanup-verify' : 'setup-verify';
+
+			$_POST['step'] = $step;
 			}
 
 		switch ( $step )
@@ -768,53 +780,84 @@ class GBPWizardTabView extends GBPAdminTabView {
 			// Render the setup wizard initial step...
 				$out[] = hed( 'Setup' , 1 );
 				$out[] = graf( 'The following setup steps are going to be done&#8230;' );
-				foreach (array_values($this->installation_steps) as $detail)
-					if (@$detail['setup'])
-						@$step_details .= n.tag(graf($detail['setup']), 'li');
-				$out[] = tag( tag( $step_details , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
-				$out[] = form(
-					fInput('submit', '', gTxt('Setup'), '') .
-					$this->form_inputs() . sInput( 'setup' ) ,
-				'' , "verify('".doSlash(gTxt('are_you_sure'))."')" );
+				$out[] = tag( tag( $this->wizard_steps('setup') , 'ol' ) , 'fieldset', $feaildset_style );
+				$out[] = fInput('submit', '', gTxt('Setup'), '');
+				$out[] = $this->form_inputs();
+				$out[] = sInput( 'setup' );
 			break;
 
 			case 'setup':
 			// Render the post-setup screen...
 				$out[] = hed( 'Setup Report&#8230;' , 1 );
-				$out[] = tag( $this->wizard_report() , 'fieldset' );
-				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . eInput($this->parent->event) . hInput(gbp_tab, 'preference') );
+				$out[] = tag( $this->wizard_report() , 'fieldset', $feaildset_style );
+				$out[] = fInput('submit', '' , gTxt('next') , '' );
+				$out[] = eInput($this->parent->event);
+				$out[] = hInput(gbp_tab, 'preference');
 			break;
 
 			case 'cleanup-verify':
 			// Render the cleanup wizard initial step...
 				$out[] = hed( 'Cleanup' , 1 );
 				$out[] = graf( 'The following cleanup steps are going to be done&#8230;' );
-				foreach (array_values(array_reverse($this->installation_steps)) as $detail)
-					if (@$detail['cleanup'])
-						@$step_details .= n.tag(graf($detail['cleanup']), 'li');
-				$out[] = tag( tag( $step_details , 'ol', ' style="text-align: left; padding-top: 0.75em;"' ) , 'fieldset' );
-				$out[] = form(
-					fInput('submit', '', gTxt('Cleanup'), '') .
-					$this->form_inputs() . sInput( 'cleanup' ) ,
-				'' , "verify('".doSlash(gTxt('are_you_sure'))."')" );
+				$out[] = tag( tag( $this->wizard_steps('cleanup') , 'ol' ) , 'fieldset', $feaildset_style );
+				$out[] = fInput('submit', '', gTxt('Cleanup'), '');
+				$out[] = $this->form_inputs();
+				$out[] = sInput( 'cleanup' );
 			break;
 
 			case 'cleanup':
 			// Render the post-cleanup screen...
 				$out[] = hed( "Cleanup Report&#8230;" , 1 );
-				$out[] = tag( $this->wizard_report() , 'fieldset' );
+				$out[] = tag( $this->wizard_report() , 'fieldset', $feaildset_style );
 				$out[] = graf( 'The plugin can now be disabled and uninstalled.' );
-				$out[] = form( fInput('submit', '' , gTxt('next') , '' ) . eInput( 'plugin' ) );
+				$out[] = fInput('submit', '' , gTxt('next') , '' );
+				$out[] = eInput( 'plugin' );
 			break;
 			}
 
 		$out[] = '</div>';
-		echo join(n, $out);
+		
+		$verify = ( in_array($step, array('setup-verify','cleanup-verify')) )
+		? "verify('".doSlash(gTxt('are_you_sure'))."')"
+		: '';
+		
+		echo form( join(n, $out), '', $verify );
 		}
 
 	function installed()
 		{
 		return false;
+		}
+
+	function wizard_steps($step)
+		{
+		$step_details = '';
+		
+		foreach ($this->installation_steps as $key => $detail)
+			{
+			if (@$detail[$step])
+				{
+				$options = '';
+				if (@$detail['has_options'])
+					{
+					$function = array( &$this, 'option_'.$key );
+					if ( is_callable( $function ) )
+						$options = n.graf(call_user_func( $function, $step ), ' id="wizard_'.$key.'" style="padding: 0.4em; background-color: #eee;"');
+					}
+
+				$checkbox = '';
+				if (@$detail['optional'])
+					{
+					$checkbox = checkbox2('optional_'.$key, 1, ($options ? '" onclick="toggleDisplay(\'wizard_'.$key.'\');' : ''));
+					}
+
+				$step_details .= n.tag(graf(
+					tag($checkbox.$detail[$step], 'label').$options
+				), 'li');
+				}
+			}
+
+		return $step_details.n;
 		}
 
 	function wizard_report()
@@ -840,15 +883,29 @@ class GBPWizardTabView extends GBPAdminTabView {
 			
 			$out[] = tag( $report[0] . $out_sub , 'li' );
 			}
-		return tag( join( n , $out ) , 'ol', ' style="text-align: left; padding-top: 0.75em;"' );
+		return tag( join( n , $out ) , 'ol' );
 		}
 
 	function add_report_item( $string , $ok = NULL, $sub = false )
 		{
 		if( isset($ok) )
 			{
-			$class  = ($ok===true) ? 'success' : 'failure';
-			$okfail = ($ok===true) ? gTxt('l10n-done') : gTxt('l10n-failed');
+			switch ($ok)
+				{
+				case '1' :
+					$class = 'success';
+					$okfail = gTxt('l10n-done');
+				break;
+				default:
+				case '0' :
+					$class = 'failure';
+					$okfail = gTxt('l10n-failed');
+				break;
+				case 'skipped' :
+					$class = 'skipped';
+					$okfail = gTxt('Skipped');
+				break;
+				}
 			$okfail = ' : <span class="'.$class.'">'.tag( $okfail, 'strong' ).'</span>';
 			}
 
@@ -860,14 +917,39 @@ class GBPWizardTabView extends GBPAdminTabView {
 			$this->wizard_report[] = array( $line );
 		}
 
-	function setup_test()
+	function setup_basic()
 		{
-		$this->add_report_item('foo', true);
+		$this->add_report_item('Basic step', true);
 		}
 
-	function cleanup_test()
+	function cleanup_basic()
 		{
-		$this->add_report_item('bar', false);
+		$this->add_report_item('Basic step', false);
+		}
+
+	function setup_optional()
+		{
+		$this->add_report_item('Optional step', true);
+		}
+
+	function cleanup_optional()
+		{
+		$this->add_report_item('Optional step', false);
+		}
+
+	function setup_has_options()
+		{
+		$this->add_report_item('Step with a option', true);
+		}
+
+	function cleanup_has_options()
+		{
+		$this->add_report_item('Step with a option', false);
+		}
+
+	function option_has_options($step)
+		{
+		return 'This '.$step.' step has a option.'.br.yesnoRadio('wizard_has_options_test', 1);
 		}
 }
 
