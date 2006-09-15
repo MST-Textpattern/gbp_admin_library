@@ -842,7 +842,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 					{
 					$function = array( &$this, 'option_'.$key );
 					if ( is_callable( $function ) )
-						$options = n.graf(call_user_func( $function, $step ), ' id="wizard_'.$key.'" style="padding: 0.4em; background-color: #eee;"');
+						$options = n.tag(call_user_func( $function, $step ), 'span', ' id="wizard_'.$key.'" style="display: block; margin-right: 1em; padding: 0.5em; background-color: #eee;"');
 					}
 
 				$checkbox = '';
@@ -949,7 +949,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 	function option_has_options($step)
 		{
-		return 'This '.$step.' step has a option.'.br.yesnoRadio('wizard_has_options_test', 1);
+		return graf('This '.$step.' step has a option.').yesnoRadio('wizard_has_options_test', 1);
 		}
 }
 
