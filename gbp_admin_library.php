@@ -697,6 +697,50 @@ class GBPWizardTabView extends GBPAdminTabView {
 			GBPAdminTabView::GBPAdminTabView( 'Wizards', 'wizard', $parent, $is_default );
 		}
 
+	function versions_ok()
+		{
+		$msg = '';
+
+		#
+		#	Check the plugin can run in this environment.
+		#
+		#	Return: TRUE -> Yes.
+		#	HTML formatted string -> No, and explain why.
+		#
+
+		$tests = $this->get_required_versions();
+		if( count( $tests ) )
+			foreach( $tests as $name=>$versions )
+				{
+				if( version_compare( $versions['current'], $versions['min'] , '<') )
+					{
+					$res =	"It requires <strong class=\"failure\">$name {$versions['min']}</strong> or above, current install is {$versions['current']}.";
+					$msg[] = tag( $res , 'li', ' style="text-align: left; padding-top: 0.75em;"' );
+					}
+				}
+
+		if( !empty($msg) )
+			return tag( join( '' , $msg ) , 'ol' );
+
+		return true;
+		}
+
+	function get_required_versions()
+		{
+		global $prefs;
+
+		#
+		#	Override this function to return an array of tests to be carried out.
+		#
+		$tests = array(
+					'TxP' => array(
+						'current'	=> $prefs['version'] ,
+						'min'		=> '4.0.3' ,
+						),
+					);
+		return $tests;
+		}
+
 	function main()
 		{
 		$out[] = '<style type="text/css"> .success { color: #009900; } .failure { color: #FF0000; } </style>';
@@ -704,10 +748,22 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 		$step = gps('step');
 		if (empty($step))
-			$step = ($this->installed()) ? 'cleanup-verify' : 'setup-verify';
+			{
+			$result = $this->versions_ok();
+			if( is_string( $result ) )
+				$step = 'version_error';
+			else
+				$step = ($this->installed()) ? 'cleanup-verify' : 'setup-verify';
+			}
 
 		switch ( $step )
 			{
+			case 'version_error':
+				$out[] = hed( 'Version Errors' , 1 );
+				$out[] = graf( 'This plugin cannot operate in this installation because&#8230;' );
+				$out[] = $result;
+			break;
+
 			case 'setup-verify':
 			// Render the setup wizard initial step...
 				$out[] = hed( 'Setup' , 1 );
