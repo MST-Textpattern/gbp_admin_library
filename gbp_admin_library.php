@@ -857,7 +857,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 					}
 
 				$step_details .= n.tag(graf(
-					tag($checkbox.$detail[$step], 'label').$options
+					tag($detail[$step].$checkbox, 'label').$options
 				), 'li');
 				}
 			}
