@@ -476,9 +476,7 @@ class GBPPlugin {
 				$out[] = $key.'='.$value;
 			}
 
-		global $siteurl;
-		$script = 'http://'.$siteurl.'/textpattern/index.php';
-
+		$script = hu.basename(txpath).'/index.php';
 		return $script . ( isset( $out ) 
 			? '?'.join('&', $out)
 			: '' );
@@ -688,8 +686,7 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 
 	function popHelp($helpvar)
 		{
-		global $siteurl;
-		$script = 'http://'.$siteurl.'/textpattern/index.php';
+		$script = hu.basename(txpath).'/index.php';
 		return '<a href="'.$script.'?event=plugin&step=plugin_help&name='.$this->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
 		}
 }
