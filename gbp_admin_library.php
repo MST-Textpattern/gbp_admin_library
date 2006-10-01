@@ -1,7 +1,7 @@
 ﻿<?php
 
 $plugin['name'] = 'gbp_admin_library';
-$plugin['version'] = '0.2';
+$plugin['version'] = '0.3';
 $plugin['author'] = 'Graeme Porteous';
 $plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
 $plugin['description'] = 'GBP\'s Admin-Side Library';
