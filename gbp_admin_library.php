@@ -1,15 +1,15 @@
 ﻿<?php
 
-$plugin['name'] = 'gbp_admin_library';
-$plugin['version'] = '0.3';
-$plugin['author'] = 'Graeme Porteous';
-$plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
-$plugin['description'] = 'GBP\'s Admin-Side Library';
-$plugin['type'] = 2;
+	$plugin['name'] = 'gbp_admin_library';
+	$plugin['version'] = '0.3';
+	$plugin['author'] = 'Graeme Porteous';
+	$plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
+	$plugin['description'] = 'GBP\'s Admin-Side Library';
+	$plugin['type'] = 2;
 
-$plugin['url'] = '$HeadURL$';
-$plugin['date'] = '$LastChangedDate$';
-$plugin['revision'] = '$LastChangedRevision$';
+	$plugin['url'] = '$HeadURL$';
+	$plugin['date'] = '$LastChangedDate$';
+	$plugin['revision'] = '$LastChangedRevision$';
 
 @include_once('../zem_tpl.php');
 
@@ -17,25 +17,25 @@ if (0) {
 ?>
 <!-- CSS SECTION
 # --- BEGIN PLUGIN CSS ---
-<style type="text/css">
-div#adminlib_help td { vertical-align:top; }
-div#adminlib_help code { font-weight:bold; font: 105%/130% "Courier New", courier, monospace; background-color: #FFFFCC;}
-div#adminlib_help code.code_tag { font-weight:normal; border:1px dotted #999; background-color: #f0e68c; display:block; margin:10px 10px 20px; padding:10px; }
-div#adminlib_help a:link, div#adminlib_help a:visited { color: blue; text-decoration: none; border-bottom: 1px solid blue; padding-bottom:1px;}
-div#adminlib_help a:hover, div#adminlib_help a:active { color: blue; text-decoration: none; border-bottom: 2px solid blue; padding-bottom:1px;}
-div#adminlib_help h1 { color: #369; font: 20px Georgia, sans-serif; margin: 0; text-align: center; }
-div#adminlib_help h2 { border-bottom: 1px solid black; padding:10px 0 0; color: #369; font: 17px Georgia, sans-serif; }
-div#adminlib_help h3 { color: #693; font: bold 12px Arial, sans-serif; letter-spacing: 1px; margin: 10px 0 0;text-transform: uppercase;}
-</style>
+	<style type="text/css">
+	div#adminlib_help td { vertical-align:top; }
+	div#adminlib_help code { font-weight:bold; font: 105%/130% "Courier New", courier, monospace; background-color: #FFFFCC;}
+	div#adminlib_help code.code_tag { font-weight:normal; border:1px dotted #999; background-color: #f0e68c; display:block; margin:10px 10px 20px; padding:10px; }
+	div#adminlib_help a:link, div#adminlib_help a:visited { color: blue; text-decoration: none; border-bottom: 1px solid blue; padding-bottom:1px;}
+	div#adminlib_help a:hover, div#adminlib_help a:active { color: blue; text-decoration: none; border-bottom: 2px solid blue; padding-bottom:1px;}
+	div#adminlib_help h1 { color: #369; font: 20px Georgia, sans-serif; margin: 0; text-align: center; }
+	div#adminlib_help h2 { border-bottom: 1px solid black; padding:10px 0 0; color: #369; font: 17px Georgia, sans-serif; }
+	div#adminlib_help h3 { color: #693; font: bold 12px Arial, sans-serif; letter-spacing: 1px; margin: 10px 0 0;text-transform: uppercase;}
+	</style>
 # --- END PLUGIN CSS ---
 -->
 <!-- HELP SECTION
 # --- BEGIN PLUGIN HELP ---
 
 <div id="adminlib_help">
- 
+
 h1(#top). Graeme Porteous' Admin Library.
- 
+
 Provides basic classes for building the admin side of your own, derived, plugins.
 
 </div>
@@ -86,7 +86,7 @@ class GBPPlugin {
 		add_privs($this->event, ($perms ? $perms : $this->permissions));
 
 		if (@txpinterface == 'admin')
-		{
+			{
 			// We are admin-side.
 
 			// There must be title and event attributes
@@ -127,19 +127,19 @@ class GBPPlugin {
 					$tab = &$this->tabs[$this->active_tab];
 					$tab->is_active = 1;
 					$tab->preload();
+					}
 				}
-			}
 
 			// Call txp functions to register this plugin
 			if ($parent_tab)
-			{
+				{
 				register_tab($parent_tab, $event, $title);
 				register_callback(array(&$this, 'render'), $event, null, 0);
+				}
 			}
-		}
 		if (@txpinterface == 'public')
 			$this->load_preferences();
-	}
+		}
 
 	function load_preferences()
 		{
@@ -191,7 +191,7 @@ class GBPPlugin {
 			// Re-set the combined and decoded value to the global prefs array.
 			$prefs[$base_name] = $value;
 
-			// If the preference exists in our preference array set the new value and correct type. 
+			// If the preference exists in our preference array set the new value and correct type.
 			$base_name = substr($base_name, strlen($this->plugin_name.'_'));
 			if (array_key_exists($base_name, $this->preferences))
 				$this->preferences[$base_name] = array('value' => $value, 'type' => $type);
@@ -202,7 +202,7 @@ class GBPPlugin {
 		{
 		global $prefs, $txp_current_plugin;
 
-		// If the plugin_name or event isn't set is it safe to assume 
+		// If the plugin_name or event isn't set is it safe to assume
 		// $txp_current_plugin and gps('event') are correct?
 		$plugin = ($this->plugin_name) ? $this->plugin_name : $txp_current_plugin;
 		$event = ($this->event) ? $this->event : gps('event');
@@ -218,7 +218,7 @@ class GBPPlugin {
 		else if (empty($type))
 			$type = 'text_input';
 
-		// Set the new value to the global prefs array and if the preference exists 
+		// Set the new value to the global prefs array and if the preference exists
 		// to our own preference array.
 		$prefs[$name] = $value;
 		if (array_key_exists($key, $this->preferences))
@@ -242,7 +242,7 @@ class GBPPlugin {
 		while ( strlen($value) && $i < 16 )
 			{
 			// Grab the first 255 chars from the value and strip any backward slashes which
-			// cause the SQL to break. 
+			// cause the SQL to break.
 			$value_segment = rtrim(substr($value, 0, 255), '\\');
 
 			// Set the preference and update name for the next array_key_exists check.
@@ -313,7 +313,7 @@ class GBPPlugin {
 		if (is_a($tab, 'GBPWizardTabView'))
 			{
 			$tab->parent = &$this;
-			
+
 			// Wizard routines
 			$step = gps('step');
 			if( in_array( $step, array( 'setup', 'cleanup' ) ) )
@@ -341,14 +341,14 @@ class GBPPlugin {
 
 		// We've got a tab, lets assume we want to use it
 		$this->use_tabs = true;
-		
+
 		return $this;
-	}
+		}
 
 	function preload() {
 
 		// Override this function if you require sub tabs.
-	}
+		}
 
 	function render() {
 
@@ -365,11 +365,11 @@ class GBPPlugin {
 
 			$this->render_tabs();
 			$this->render_tab_main();
-		}
+			}
 
 		$this->render_footer();
 		$this->end();
-	}
+		}
 
 	function render_header() {
 
@@ -378,7 +378,7 @@ class GBPPlugin {
 
 		// Once a message has been used we discard it
 		$this->message = '';
-	}
+		}
 
 	function render_tabs() {
 
@@ -392,7 +392,7 @@ class GBPPlugin {
 		if( $this->wizard_installed || !$this->wizard_key )
 			foreach (array_keys($this->tabs) as $key)
 				{
-				// Render each tab bu tkeep a reference to the tab so any changes made are store
+				// Render each tab but keep a reference to the tab so any changes made are stored
 				$tab = &$this->tabs[$key];
 				$out[] = $tab->render_tab();
 				}
@@ -407,12 +407,12 @@ class GBPPlugin {
 		$out[] = '</table><div style="padding: 0 30px;">';
 
 		echo join('', $out);
-	}
+		}
 
 	function main() {
 
 		// Override this function
-	}
+		}
 
 	function render_tab_main() {
 
@@ -422,7 +422,7 @@ class GBPPlugin {
 			$tab->main();
 		else
 			echo '<p style="margin-top:3em;text-align:center">'.gTxt('restricted_area').'</p>';
-	}
+		}
 
 	function render_footer() {
 
@@ -436,12 +436,12 @@ class GBPPlugin {
 		$out[] = '</div>';
 
 		echo join('', $out);
-	}
+		}
 
 	function end() {
 
 		// Override this function
-	}
+		}
 
 	function form_inputs() {
 
@@ -451,16 +451,16 @@ class GBPPlugin {
 
 			$tab = $this->tabs[$this->active_tab];
 			$out[] = hInput(gbp_tab, $tab->event);
-		}
-		
+			}
+
 		return join('', $out);
-	}
+		}
 
 	function url( $vars=array(), $gp=false )
 		{
 		/*
-		Expands $vars into a get style url and redirects to that location. These can be 
-		overriden with the current get, post, session variables defined in $this->gp 
+		Expands $vars into a get style url and redirects to that location. These can be
+		overriden with the current get, post, session variables defined in $this->gp
 		by setting $gp = true
 		NOTE: If $vars is not an array or is empty then we assume $gp = true.
 		*/
@@ -469,7 +469,7 @@ class GBPPlugin {
 			$vars = gpsa($this->gp);
 		else if ( $gp || !count($vars) )
 			$vars = array_merge(gpsa($this->gp), $vars);
-		
+
 		foreach ($vars as $key => $value)
 			{
 			if ( !empty( $value ) )
@@ -477,15 +477,15 @@ class GBPPlugin {
 			}
 
 		$script = hu.basename(txpath).'/index.php';
-		return $script . ( isset( $out ) 
+		return $script . ( isset( $out )
 			? '?'.join('&', $out)
 			: '' );
 		}
 
-	function redirect( $url='', $status=303 ) 
+	function redirect( $url='', $status=303 )
 		{
 		/*
-		If $vars is an array, use url() to expand as an GET style url and redirect to 
+		If $vars is an array, use url() to expand as an GET style url and redirect to
 		that location using the HTTP status code definition defined by $status.
 		*/
 
@@ -528,7 +528,7 @@ class GBPPlugin {
 			return $prefs[$key];
 		return NULL;
 		}
-}
+	}
 
 class GBPAdminTabView {
 	//	Internal variables
@@ -546,7 +546,7 @@ class GBPAdminTabView {
 		: ucwords( $title );
 
 		$this->event = $event;
-		
+
 		// Note: $this->parent only gets set correctly for PHP 5
 		$this->parent =& $parent->add_tab($this, $is_default);
 
@@ -554,21 +554,21 @@ class GBPAdminTabView {
 		global $txp_permissions;
 		$perms = @$txp_permissions[$this->permissions];
 		add_privs($this->parent->event.'.'.$this->event, ($perms ? $perms : $this->permissions));
-	}
-	
+		}
+
 	function php_4_fix() {
 		
 		// Fix references in PHP 4 so sub tabs can access their parent tab
 		if (version_compare(phpversion(),'5.0.0','<')) { 
 			global $txp_current_plugin, $gbp_admin_lib_refs;
 			$this->parent =& $gbp_admin_lib_refs[$txp_current_plugin];
+			}
 		}
-	}
-	
+
 	function preload() {
 		
 		// Override this function
-	}
+		}
 
 	function render_tab() {
 
@@ -581,43 +581,43 @@ class GBPAdminTabView {
 		$out[] = '<a href="' .$url. '" class="plain">' .$this->title. '</a></td>';
 
 		return join('', $out);
-	}
+		}
 
 	function main() {
 
 		// Override this function
-	}
+		}
 
 	function pref( $key )
-	{
-	return @$this->parent->pref($key);
-	}
+		{
+		return @$this->parent->pref($key);
+		}
 
 	function redirect( $vars='' )
-	{
-	$this->parent->redirect($vars);
-	}
+		{
+		$this->parent->redirect($vars);
+		}
 
 	function set_preference( $key, $value, $type='' )
-	{
-	return $this->parent->set_preference($key, $value, $type);
-	}
+		{
+		return $this->parent->set_preference($key, $value, $type);
+		}
 
 	function remove_preference( $key )
-	{
-	return $this->parent->remove_preference($key);
-	}
+		{
+		return $this->parent->remove_preference($key);
+		}
 
 	function url( $vars, $gp=false )
-	{
-	return $this->parent->url($vars, $gp);
-	}
+		{
+		return $this->parent->url($vars, $gp);
+		}
 
 	function form_inputs()
-	{
-	return $this->parent->form_inputs();
+		{
+		return $this->parent->form_inputs();
+		}
 	}
-}
 
 class GBPPreferenceTabView extends GBPAdminTabView {
 
@@ -625,8 +625,8 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 
 	function GBPPreferenceTabView(&$parent, $is_default = NULL)
 		{
-			// Call the parent constructor
-			GBPAdminTabView::GBPAdminTabView( gTxt('tab_preferences'), 'preference', $parent, $is_default );
+		// Call the parent constructor
+		GBPAdminTabView::GBPAdminTabView( gTxt('tab_preferences'), 'preference', $parent, $is_default );
 		}
 
 	function preload()
@@ -649,7 +649,7 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 		// Make txp_prefs.php happy :)
 		global $event;
 		$event = $this->parent->event;
-	
+
 		include_once txpath.'/include/txp_prefs.php';
 
 		echo
@@ -661,7 +661,7 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 			extract($pref);
 
 			$out = tda(gTxt($key), ' style="text-align:right;vertical-align:middle"');
-				
+
 			switch ($type)
 				{
 				case 'text_input':
@@ -674,8 +674,8 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 						$out .= td(pref_func($type, $key, $value, 50));
 				break;
 				}
-			
-			$out.= tda($this->popHelp($key), ' style="vertical-align:middle"');			
+
+			$out.= tda($this->popHelp($key), ' style="vertical-align:middle"');
 			echo tr($out);
 			}
 
@@ -692,7 +692,7 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 		$script = hu.basename(txpath).'/index.php';
 		return '<a href="'.$script.'?event=plugin&step=plugin_help&name='.$this->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
 		}
-}
+	}
 
 class GBPWizardTabView extends GBPAdminTabView {
 
@@ -700,14 +700,14 @@ class GBPWizardTabView extends GBPAdminTabView {
 		'basic' => array('setup' => 'Basic setup step', 'cleanup' => 'Basic cleanup step'),
 		'optional' => array('setup' => 'Optional setup step', 'cleanup' => 'Optional cleanup step', 'optional' => true),
 		'has_options' => array('setup' => 'Setup step with a option', 'cleanup' => 'Cleanup step with a option', 'has_options' => true),
-	);
+		);
 	var $wizard_report = array();
 	var $permissions = 'admin.edit';
 
 	function GBPWizardTabView(&$parent, $is_default = NULL)
 		{
-			// Call the parent constructor
-			GBPAdminTabView::GBPAdminTabView( 'Wizards', 'wizard', $parent, $is_default );
+		// Call the parent constructor
+		GBPAdminTabView::GBPAdminTabView( 'Wizards', 'wizard', $parent, $is_default );
 		}
 
 	function versions_ok()
@@ -821,11 +821,11 @@ class GBPWizardTabView extends GBPAdminTabView {
 			}
 
 		$out[] = '</div>';
-		
+
 		$verify = ( in_array($step, array('setup-verify','cleanup-verify')) )
 		? "verify('".doSlash(gTxt('are_you_sure'))."')"
 		: '';
-		
+
 		echo form( join(n, $out), '', $verify );
 		}
 
@@ -837,7 +837,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 	function wizard_steps($step)
 		{
 		$step_details = '';
-		
+
 		foreach ($this->installation_steps as $key => $detail)
 			{
 			if (@$detail[$step])
@@ -867,25 +867,25 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 	function wizard_report()
 		{
-		// Render the wizard report as an ordered list. There maybe 
+		// Render the wizard report as an ordered list. There maybe
 		// 'sub' reports which we need to also render as ordered lists
 		$out = array();
 		foreach ($this->wizard_report as $report)
 			{
 			$out_sub = array();
-			
+
 			// Skip the first element as it is in fact the parent report
 			next($report);
-			
+
 			// Lets generate a sub report - if there are more elements
 			while (list($key, $report_sub) = each($report))
 				$out_sub[] = tag( $report_sub , 'li' );
 
-			// Check to see if we actually have a sub report - tag it as necessary 
+			// Check to see if we actually have a sub report - tag it as necessary
 			$out_sub = ( count($out_sub) > 0 )
 			? tag( join( n , $out_sub ), 'ol' )
 			: '';
-			
+
 			$out[] = tag( $report[0] . $out_sub , 'li' );
 			}
 		return tag( join( n , $out ) , 'ol' );
