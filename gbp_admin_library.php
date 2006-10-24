@@ -557,16 +557,16 @@ class GBPAdminTabView {
 		}
 
 	function php_4_fix() {
-		
+
 		// Fix references in PHP 4 so sub tabs can access their parent tab
-		if (version_compare(phpversion(),'5.0.0','<')) { 
+		if (version_compare(phpversion(),'5.0.0','<')) {
 			global $txp_current_plugin, $gbp_admin_lib_refs;
 			$this->parent =& $gbp_admin_lib_refs[$txp_current_plugin];
 			}
 		}
 
 	function preload() {
-		
+
 		// Override this function
 		}
 
@@ -704,10 +704,10 @@ class GBPWizardTabView extends GBPAdminTabView {
 	var $wizard_report = array();
 	var $permissions = 'admin.edit';
 
-	function GBPWizardTabView(&$parent, $is_default = NULL)
+	function GBPWizardTabView(&$parent, $is_default = NULL, $title='Wizards')
 		{
 		// Call the parent constructor
-		GBPAdminTabView::GBPAdminTabView( 'Wizards', 'wizard', $parent, $is_default );
+		GBPAdminTabView::GBPAdminTabView( $title, 'wizard', $parent, $is_default );
 		}
 
 	function versions_ok()
