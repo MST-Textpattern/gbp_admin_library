@@ -784,7 +784,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 			case 'setup-verify':
 			// Render the setup wizard initial step...
 				$out[] = hed( 'Setup' , 1 );
-				$out[] = graf( 'The following setup steps are going to be done&#8230;' );
+				$out[] = graf( 'The following setup steps will be taken&#8230;' );
 				$out[] = tag( tag( $this->wizard_steps('setup') , 'ol' ) , 'fieldset', $feaildset_style );
 				$out[] = fInput('submit', '', gTxt('Setup'), '');
 				$out[] = $this->form_inputs();
@@ -803,7 +803,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 			case 'cleanup-verify':
 			// Render the cleanup wizard initial step...
 				$out[] = hed( 'Cleanup' , 1 );
-				$out[] = graf( 'The following cleanup steps are going to be done&#8230;' );
+				$out[] = graf( 'The following cleanup steps will be taken&#8230;' );
 				$out[] = tag( tag( $this->wizard_steps('cleanup') , 'ol' ) , 'fieldset', $feaildset_style );
 				$out[] = fInput('submit', '', gTxt('Cleanup'), '');
 				$out[] = $this->form_inputs();
@@ -814,7 +814,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 			// Render the post-cleanup screen...
 				$out[] = hed( "Cleanup Report&#8230;" , 1 );
 				$out[] = tag( $this->wizard_report() , 'fieldset', $feaildset_style );
-				$out[] = graf( 'The plugin can now be disabled and uninstalled.' );
+				$out[] = graf( 'The plugin can now be disabled and/or uninstalled.' );
 				$out[] = fInput('submit', '' , gTxt('next') , '' );
 				$out[] = eInput( 'plugin' );
 			break;
@@ -944,17 +944,17 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 	function setup_has_options()
 		{
-		$this->add_report_item('Step with a option', true);
+		$this->add_report_item('Step with option(s)', true);
 		}
 
 	function cleanup_has_options()
 		{
-		$this->add_report_item('Step with a option', false);
+		$this->add_report_item('Step with option(s)', false);
 		}
 
 	function option_has_options($step)
 		{
-		return graf('This '.$step.' step has a option.').yesnoRadio('wizard_has_options_test', 1);
+		return graf('This '.$step.' step has an option/options.').yesnoRadio('wizard_has_options_test', 1);
 		}
 }
 
