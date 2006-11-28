@@ -508,11 +508,33 @@ class GBPPlugin {
 				$url = 'http://'.$url;
 			}
 
-		header('HTTP/1.1 '.$status.' '.$status_definitions[$status]);
-		header('Status: '.$status);
-		header('Location: '.$url);
-		header('Connection: close');
-		exit(0);
+		if (empty($_SERVER['FCGI_ROLE']) and empty($_ENV['FCGI_ROLE']))
+			{
+			header('HTTP/1.1 '.$status.' '.$status_definitions[$status]);
+			header('Status: '.$status);
+			header('Location: '.$url);
+			header('Connection: close');
+			header('Content-Length: 0');
+			exit(0);
+			}
+		else
+			{
+			global $sitename;
+			$url = htmlspecialchars($url);
+			echo <<<END
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+			<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+			<head>
+				<title>$sitename</title>
+				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+				<meta http-equiv="refresh" content="0;url=$url" />
+			</head>
+			<body>
+			<a href="$url">{$status_definitions[$status]}</a>
+			</body>
+			</html>
+END;
+			}
 		}
 
 	function pref( $key )
