@@ -720,7 +720,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 	var $installation_steps = array(
 		'basic' => array('setup' => 'Basic setup step', 'cleanup' => 'Basic cleanup step'),
-		'optional' => array('setup' => 'Optional setup step', 'cleanup' => 'Optional cleanup step', 'optional' => true),
+		'optional' => array('setup' => 'Optional setup step', 'cleanup' => 'Optional cleanup step', 'optional' => true , 'checked'=> 0 ),
 		'has_options' => array('setup' => 'Setup step with a option', 'cleanup' => 'Cleanup step with a option', 'has_options' => true),
 		);
 	var $wizard_report = array();
@@ -875,7 +875,8 @@ class GBPWizardTabView extends GBPAdminTabView {
 				$checkbox = '';
 				if (@$detail['optional'])
 					{
-					$checkbox = checkbox2('optional_'.$key, 1, ($options ? '" onclick="toggleDisplay(\'wizard_'.$key.'\');' : ''));
+					$checked = (isset($detail['checked']))? $detail['checked'] : 0 ;
+					$checkbox = checkbox2('optional_'.$key, $checked, ($options ? '" onclick="toggleDisplay(\'wizard_'.$key.'\');' : ''));
 					}
 
 				$step_details .= n.tag(graf(
