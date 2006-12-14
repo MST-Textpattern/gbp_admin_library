@@ -1,7 +1,7 @@
 ﻿<?php
 
 	$plugin['name'] = 'gbp_admin_library';
-	$plugin['version'] = '0.3';
+	$plugin['version'] = '0.3-MLP';
 	$plugin['author'] = 'Graeme Porteous';
 	$plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
 	$plugin['description'] = 'GBP\'s Admin-Side Library';
@@ -380,14 +380,15 @@ class GBPPlugin {
 		$this->message = '';
 		}
 
-	function render_tabs() {
-
+	function render_tabs()
+		{
 		// This table, which contains the tags, will have to be changed if any improvements
 		// happen to the admin interface
 		$out[] = '<table cellpadding="0" cellspacing="0" width="100%" style="margin-top:-2em;margin-bottom:2em;">';
 		$out[] = '<tr><td align="center" class="tabs">';
 		$out[] = '<table cellpadding="0" cellspacing="0" align="center"><tr>';
 
+		$style = 'style="padding: 0 30px;"';
 		// Force the wizard to be the only tab if the plugin isn't installed
 		if( $this->wizard_installed || !$this->wizard_key )
 			foreach (array_keys($this->tabs) as $key)
@@ -395,16 +396,28 @@ class GBPPlugin {
 				// Render each tab but keep a reference to the tab so any changes made are stored
 				$tab = &$this->tabs[$key];
 				$out[] = $tab->render_tab();
+				$fn = array( &$tab , 'get_canvas_style' );
+				if( is_callable( $fn ) )
+					{
+					$res = call_user_func( $fn );
+					$style = (false!==$res) ? $res : $style ;
+					}
 				}
 		else
 			{
 			$tab = &$this->tabs[$this->wizard_key];
 			$out[] = $tab->render_tab();
+			$fn = array( &$tab , 'get_canvas_style' );
+			if( is_callable( $fn ) )
+				{
+				$res = call_user_func( $fn );
+				$style = (false!==$res) ? $res : $style ;
+				}
 			}
 
 		$out[] = '</tr></table>';
 		$out[] = '</td></tr>';
-		$out[] = '</table><div style="padding: 0 30px;">';
+		$out[] = '</table><div '.$style.'>';
 
 		echo join('', $out);
 		}
