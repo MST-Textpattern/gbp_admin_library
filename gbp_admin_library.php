@@ -1,7 +1,7 @@
 ﻿<?php
 
 	$plugin['name'] = 'gbp_admin_library';
-	$plugin['version'] = '0.3-MLP';
+	$plugin['version'] = '0.4';
 	$plugin['author'] = 'Graeme Porteous';
 	$plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
 	$plugin['description'] = 'GBP\'s Admin-Side Library';
@@ -731,20 +731,69 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 
 class GBPWizardTabView extends GBPAdminTabView {
 
-	var $installation_steps = array(
-		'basic' => array('setup' => 'Basic setup step', 'cleanup' => 'Basic cleanup step'),
-		'optional' => array('setup' => 'Optional setup step', 'cleanup' => 'Optional cleanup step', 'optional' => true , 'checked'=> 0 ),
-		'has_options' => array('setup' => 'Setup step with a option', 'cleanup' => 'Cleanup step with a option', 'has_options' => true),
-		);
-	var $wizard_report = array();
+	var $installation_steps = array();
+	var $wiz_report = array();
 	var $permissions = 'admin.edit';
 
 	function GBPWizardTabView(&$parent, $is_default = NULL, $title='Wizards')
 		{
+		global $textarray;
+
+		#
+		#	Get the strings and merge into the textarray before we get the steps...
+		#
+		$strings = $this->get_strings();
+		$textarray = array_merge( $strings , $textarray );
+
+		#
+		#	Now get the steps...
+		#
+		$this->installation_steps = $this->get_steps();
+
 		// Call the parent constructor
 		GBPAdminTabView::GBPAdminTabView( $title, 'wizard', $parent, $is_default );
 		}
 
+	function get_steps()
+		{
+		#
+		#	Override this method in derived classes to return the appropriate setup/cleanup steps.
+		#
+		$steps = array(
+			'basic' => array('setup' => 'Basic setup step', 'cleanup' => 'Basic cleanup step'),
+			'optional' => array('setup' => 'Optional setup step', 'cleanup' => 'Optional cleanup step', 'optional' => true , 'checked'=> 0 ),
+			'has_options' => array('setup' => 'Setup step with a option', 'cleanup' => 'Cleanup step with a option', 'has_options' => true),
+			);
+		return $steps;
+		}
+
+	function get_strings( $language='' )
+		{
+		#
+		#	Override this function in derived classes to define/change the set of strings to
+		# inject into $textarray to localise the wizard.
+		#
+		$strings = array(
+							'gbp_adlib_wiz-version_errors'		=> 'Version Errors',
+							'gbp_adlib_wiz-version_reason'		=> 'This plugin cannot operate in this installation because&#8230;',
+							'gbp_adlib_wiz-version_item'		=> 'It requires <strong class="failure">{name} {min}</strong> or above, current install is {current}.',
+							'gbp_adlib_wiz-setup' 				=> 'Setup',
+							'gbp_adlib_wiz-setup_steps' 		=> 'The following setup steps will be taken&#8230;',
+							'gbp_adlib_wiz-setup_report'		=> 'Setup Report&#8230;',
+							'gbp_adlib_wiz-cleanup' 			=> 'Cleanup',
+							'gbp_adlib_wiz-cleanup_steps' 		=> 'The following cleanup steps will be taken&#8230;',
+							'gbp_adlib_wiz-cleanup_report'		=> 'Cleanup Report&#8230;',
+							'gbp_adlib_wiz-cleanup_next' 		=> 'The plugin can now be disabled and/or uninstalled.',
+							'gbp_adlib_wiz-done' 				=> 'Done',
+							'gbp_adlib_wiz-skipped'				=> 'Skipped',
+							'gbp_adlib_wiz-failed'				=> 'Failure',
+							'gbp_adlib_wiz-step_basic'			=> 'Basic Step',
+							'gbp_adlib_wiz-step_optional'		=> 'Optional step',
+							'gbp_adlib_wiz-step_complex'		=> 'Step with option(s)',
+							'gbp_adlib_wiz-step_complex_txt'	=> 'This {step} step has an option/options.',
+							);
+		return $strings;
+		}
 	function versions_ok()
 		{
 		$msg = '';
@@ -755,14 +804,13 @@ class GBPWizardTabView extends GBPAdminTabView {
 		#	Return: TRUE -> Yes.
 		#	HTML formatted string -> No, and explain why.
 		#
-
 		$tests = $this->get_required_versions();
 		if( count( $tests ) )
 			foreach( $tests as $name=>$versions )
 				{
 				if( version_compare( $versions['current'], $versions['min'] , '<') )
 					{
-					$res =	"It requires <strong class=\"failure\">$name {$versions['min']}</strong> or above, current install is {$versions['current']}.";
+					$res = gTxt( 'gbp_adlib_wiz-version_item' , array( '{name}'=>$name , '{min}'=>$versions['min'] , '{current}'=>$versions['current'] ) );
 					$msg[] = tag( $res , 'li', ' style="text-align: left; padding-top: 0.75em;"' );
 					}
 				}
@@ -811,24 +859,24 @@ class GBPWizardTabView extends GBPAdminTabView {
 		switch ( $step )
 			{
 			case 'version_error':
-				$out[] = hed( 'Version Errors' , 1 );
-				$out[] = graf( 'This plugin cannot operate in this installation because&#8230;' );
+				$out[] = hed( gTxt('gbp_adlib_wiz-version_errors') , 1 );
+				$out[] = graf( gTxt('gbp_adlib_wiz-version_reason') );
 				$out[] = $result;
 			break;
 
 			case 'setup-verify':
 			// Render the setup wizard initial step...
-				$out[] = hed( 'Setup' , 1 );
-				$out[] = graf( 'The following setup steps will be taken&#8230;' );
+				$out[] = hed( gTxt('gbp_adlib_wiz-setup') , 1 );
+				$out[] = graf( gTxt('gbp_adlib_wiz-setup_steps') );
 				$out[] = tag( tag( $this->wizard_steps('setup') , 'ol' ) , 'fieldset', $feaildset_style );
-				$out[] = fInput('submit', '', gTxt('Setup'), '');
+				$out[] = fInput('submit', '', gTxt('gbp_adlib_wiz-setup'), '');
 				$out[] = $this->form_inputs();
 				$out[] = sInput( 'setup' );
 			break;
 
 			case 'setup':
 			// Render the post-setup screen...
-				$out[] = hed( 'Setup Report&#8230;' , 1 );
+				$out[] = hed( gTxt('gbp_adlib_wiz-setup_report') , 1 );
 				$out[] = tag( $this->wizard_report() , 'fieldset', $feaildset_style );
 				$out[] = fInput('submit', '' , gTxt('next') , '' );
 				$out[] = eInput($this->parent->event);
@@ -837,19 +885,19 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 			case 'cleanup-verify':
 			// Render the cleanup wizard initial step...
-				$out[] = hed( 'Cleanup' , 1 );
-				$out[] = graf( 'The following cleanup steps will be taken&#8230;' );
+				$out[] = hed( gTxt('gbp_adlib_wiz-cleanup') , 1 );
+				$out[] = graf( gTxt('gbp_adlib_wiz-cleanup_steps') );
 				$out[] = tag( tag( $this->wizard_steps('cleanup') , 'ol' ) , 'fieldset', $feaildset_style );
-				$out[] = fInput('submit', '', gTxt('Cleanup'), '');
+				$out[] = fInput('submit', '', gTxt('gbp_adlib_wiz-cleanup'), '');
 				$out[] = $this->form_inputs();
 				$out[] = sInput( 'cleanup' );
 			break;
 
 			case 'cleanup':
 			// Render the post-cleanup screen...
-				$out[] = hed( "Cleanup Report&#8230;" , 1 );
+				$out[] = hed( gTxt('gbp_adlib_wiz-cleanup_report') , 1 );
 				$out[] = tag( $this->wizard_report() , 'fieldset', $feaildset_style );
-				$out[] = graf( 'The plugin can now be disabled and/or uninstalled.' );
+				$out[] = graf( gTxt('gbp_adlib_wiz-cleanup_next') );
 				$out[] = fInput('submit', '' , gTxt('next') , '' );
 				$out[] = eInput( 'plugin' );
 			break;
@@ -906,7 +954,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 		// Render the wizard report as an ordered list. There maybe
 		// 'sub' reports which we need to also render as ordered lists
 		$out = array();
-		foreach ($this->wizard_report as $report)
+		foreach ($this->wiz_report as $report)
 			{
 			$out_sub = array();
 
@@ -935,16 +983,16 @@ class GBPWizardTabView extends GBPAdminTabView {
 				{
 				case '1' :
 					$class = 'success';
-					$okfail = gTxt('l10n-done');
+					$okfail = gTxt('gbp_adlib_wiz-done');
 				break;
 				default:
 				case '0' :
 					$class = 'failure';
-					$okfail = gTxt('l10n-failed');
+					$okfail = gTxt('gbp_adlib_wiz-failure');
 				break;
 				case 'skipped' :
 					$class = 'skipped';
-					$okfail = gTxt('Skipped');
+					$okfail = gTxt('gbp_adlib_wiz-skipped');
 				break;
 				}
 			$okfail = ' : <span class="'.$class.'">'.tag( $okfail, 'strong' ).'</span>';
@@ -952,45 +1000,45 @@ class GBPWizardTabView extends GBPAdminTabView {
 
 		$line = graf( $string . (isset($okfail) ? $okfail : '') );
 
-		if ($sub && count( $this->wizard_report ) > 0)
-			$this->wizard_report[count( $this->wizard_report ) - 1][] = $line;
+		if ($sub && count( $this->wiz_report ) > 0)
+			$this->wiz_report[count( $this->wiz_report ) - 1][] = $line;
 		else
-			$this->wizard_report[] = array( $line );
+			$this->wiz_report[] = array( $line );
 		}
 
 	function setup_basic()
 		{
-		$this->add_report_item('Basic step', true);
+		$this->add_report_item( gTxt('gbp_adlib_wiz-step_basic'), true);
 		}
 
 	function cleanup_basic()
 		{
-		$this->add_report_item('Basic step', false);
+		$this->add_report_item( gTxt('gbp_adlib_wiz-step_basic'), false);
 		}
 
 	function setup_optional()
 		{
-		$this->add_report_item('Optional step', true);
+		$this->add_report_item( gTxt('gbp_adlib_wiz-step_optional'), true);
 		}
 
 	function cleanup_optional()
 		{
-		$this->add_report_item('Optional step', false);
+		$this->add_report_item( gTxt('gbp_adlib_wiz-step_optional'), false);
 		}
 
 	function setup_has_options()
 		{
-		$this->add_report_item('Step with option(s)', true);
+		$this->add_report_item( gTxt('gbp_adlib_wiz-step_complex'), true);
 		}
 
 	function cleanup_has_options()
 		{
-		$this->add_report_item('Step with option(s)', false);
+		$this->add_report_item( gTxt('gbp_adlib_wiz-step_complex'), false);
 		}
 
 	function option_has_options($step)
 		{
-		return graf('This '.$step.' step has an option/options.').yesnoRadio('wizard_has_options_test', 1);
+		return graf( gTxt('gbp_adlib_wiz-step_complex_txt' , array('{step}'=>$step) ) ).yesnoRadio('wizard_has_options_test', 1);
 		}
 }
 
