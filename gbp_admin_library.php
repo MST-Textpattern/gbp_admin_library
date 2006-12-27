@@ -523,8 +523,8 @@ class GBPPlugin {
 
 		if (empty($_SERVER['FCGI_ROLE']) and empty($_ENV['FCGI_ROLE']))
 			{
-			//header('HTTP/1.1 '.$status.' '.$status_definitions[$status]);
-			//header('Status: '.$status);
+			header('HTTP/1.1 '.$status.' '.$status_definitions[$status]);
+			header('Status: '.$status);
 			header('Location: '.$url);
 			header('Connection: close');
 			header('Content-Length: 0');
@@ -988,7 +988,7 @@ class GBPWizardTabView extends GBPAdminTabView {
 				default:
 				case '0' :
 					$class = 'failure';
-					$okfail = gTxt('gbp_adlib_wiz-failure');
+					$okfail = gTxt('gbp_adlib_wiz-failed');
 				break;
 				case 'skipped' :
 					$class = 'skipped';
