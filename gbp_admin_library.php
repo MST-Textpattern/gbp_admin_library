@@ -5,8 +5,7 @@ $plugin['date'] = '$LastChangedDate$';
 $plugin['revision'] = '$LastChangedRevision$';
 
 $revision = @$plugin['revision'];
-if(!empty($revision))
-{
+if(!empty($revision)) {
 	$parts = explode(' ', trim($revision, '$'));
 	$revision = $parts[1];
 	if(!empty($revision))
