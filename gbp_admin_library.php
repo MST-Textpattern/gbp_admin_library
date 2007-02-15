@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 $plugin['url'] = '$HeadURL$';
 $plugin['date'] = '$LastChangedDate$';
