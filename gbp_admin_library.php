@@ -761,9 +761,20 @@ class GBPWizardTabView extends GBPAdminTabView {
 		$tests = $this->get_required_versions();
 		if (count($tests))
 			foreach ($tests as $name => $versions) {
-				if (version_compare($versions['current'], $versions['min'] , '<')) {
-					$res = gTxt('gbp_adlib_wiz-version_item' , array('{name}' => $name , '{min}' => $versions['min'] , '{current}' => $versions['current']));
-					$msg[] = tag($res , 'li', ' style="text-align: left; padding-top: 0.75em;"');
+				if( array_key_exists( 'custom_handler' , $versions ) && is_callable( $versions['custom_handler'] ) ) {
+					#
+					# Allow derived classes to define their own checking routines...
+					#
+					$fn = $versions['custom_handler'];
+					$res = call_user_func( $fn , $name , $versions );
+					if( $res )
+						$msg[] = tag($res , 'li', ' style="text-align: left; padding-top: 0.75em;"');
+				}
+				else {
+					if (version_compare($versions['current'], $versions['min'] , '<')) {
+						$res = gTxt('gbp_adlib_wiz-version_item' , array('{name}' => $name , '{min}' => $versions['min'] , '{current}' => $versions['current']));
+						$msg[] = tag($res , 'li', ' style="text-align: left; padding-top: 0.75em;"');
+					}
 				}
 			}
 
