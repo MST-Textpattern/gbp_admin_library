@@ -15,7 +15,7 @@ if(!empty($revision)) {
 $plugin['name'] = 'gbp_admin_library';
 $plugin['version'] = '0.4' . $revision;
 $plugin['author'] = 'Graeme Porteous';
-$plugin['author_uri'] = 'http://porteo.us/projects/textpattern/gbp_admin_library/';
+$plugin['author_uri'] = 'http://rgbp.co.uk/projects/textpattern/gbp_admin_library/';
 $plugin['description'] = 'GBP\'s Admin-Side Library';
 $plugin['type'] = '2';
 
