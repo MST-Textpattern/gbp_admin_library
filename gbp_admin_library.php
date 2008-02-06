@@ -465,7 +465,7 @@ class GBPPlugin {
 
 		foreach ($vars as $key => $value) {
 			if (!empty($value))
-				$out[] = $key.'='.$value;
+				$out[] = $key.'='.urlencode($value);
 		}
 
 		$script = hu.basename(txpath).'/index.php';
