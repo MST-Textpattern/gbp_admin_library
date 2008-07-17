@@ -1,19 +1,7 @@
 <?php
 
-$plugin['url'] = '$HeadURL$';
-$plugin['date'] = '$LastChangedDate$';
-$plugin['revision'] = '$LastChangedRevision$';
-
-$revision = @$plugin['revision'];
-if(!empty($revision)) {
-	$parts = explode(' ', trim($revision, '$'));
-	$revision = $parts[1];
-	if(!empty($revision))
-		$revision = '.' . $revision;
-}
-
 $plugin['name'] = 'gbp_admin_library';
-$plugin['version'] = '0.4' . $revision;
+$plugin['version'] = '0.4';
 $plugin['author'] = 'Graeme Porteous';
 $plugin['author_uri'] = 'http://rgbp.co.uk/projects/textpattern/gbp_admin_library/';
 $plugin['description'] = 'GBP\'s Admin-Side Library';
