@@ -533,11 +533,15 @@ class GBPPreferenceStore {
 
 		// Combine the extended preferences, which go over two rows into one preference.
 		$i = 0; $value = '';
-		while (array_key_exists($name, $prefs)) {
-			$value .= $prefs[$name];
-			unset($prefs[$name]);
-			// Update name for the next array_key_exists check.
-			$name = $base_name.'_'.++$i;
+		if (@is_string($prefs[$name])) {
+			while (array_key_exists($name, $prefs)) {
+				$value .= $prefs[$name];
+				unset($prefs[$name]);
+				// Update name for the next array_key_exists check.
+				$name = $base_name.'_'.++$i;
+			}
+		} else if (array_key_exists($name, $prefs)) {
+			return $prefs[$name];
 		}
 
 		// If there is no value then revert to the default value if it exists.
