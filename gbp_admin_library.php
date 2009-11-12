@@ -46,7 +46,7 @@ Provides basic classes for building the admin side of your own, derived, plugins
 define('gbp_tab', 'tab');
 define('gbp_id', 'id');
 
-class GBPPlugin {
+class GBPPlugin extends GBPPreferenceStore {
 	// Internal variables
 	var $plugin_name;
 	var $title;
@@ -161,39 +161,17 @@ class GBPPlugin {
 			// Extract the name and type.
 			extract($pref);
 
-			// The base name which gbp_partial preferences could share.
-			$base_name = $name;
-
-			// Combine the extended preferences, which go over two rows into one preference.
-			$i = 0; $value = '';
-			while (array_key_exists($name, $prefs)) {
-				$value .= $prefs[$name];
-				unset($prefs[$name]);
-				// Update name for the next array_key_exists check.
-				$name = $base_name.'_'.++$i;
-			}
-
-			// If there is no value then revert to the default value if it exists.
-			if ((!$value || (@!$value[0] && count($value) <= 1)) && isset($default_value))
-				$value = $default_value;
-
-			// Else if this a custom type (E.g. gbp_serialized OR gbp_array_text)
-			// call it's db_get method to decode it's value.
-			else if (is_callable(array(&$this, $type)))
-				$value = call_user_func(array(&$this, $type), 'db_get', $value);
-
-			// Re-set the combined and decoded value to the global prefs array.
-			$prefs[$base_name] = $value;
+			$value = $this->db_read($name, $type);
 
 			// If the preference exists in our preference array set the new value and correct type.
-			$base_name = substr($base_name, strlen($this->plugin_name.'_'));
+			$base_name = substr($name, strlen($this->plugin_name.'_'));
 			if (array_key_exists($base_name, $this->preferences))
 				$this->preferences[$base_name] = array('value' => $value, 'type' => $type);
 		}
 	}
 
 	function set_preference ($key, $value, $type = '') {
-		global $prefs, $txp_current_plugin;
+		global $txp_current_plugin;
 
 		// If the plugin_name or event isn't set is it safe to assume
 		// $txp_current_plugin and gps('event') are correct?
@@ -211,84 +189,15 @@ class GBPPlugin {
 		else if (empty($type))
 			$type = 'text_input';
 
-		// Set the new value to the global prefs array and if the preference exists
-		// to our own preference array.
-		$prefs[$name] = $value;
+		// Set the new value to our own preference array.
 		if (array_key_exists($key, $this->preferences))
-			$this->preferences[$key] = array('value' => $value, 'type' => $type);
+			$this->preferences[$key]['value'] = $value;
 
-		// If this preference has a custom type (E.g. gbp_serialized OR gbp_array_text)
-		// call it's db_set method to encode the value.
-		if (is_callable(array(&$this, $type)))
-			$value = call_user_func(array(&$this, $type), 'db_set', $value);
-
-		// It is possible to leave old 'gbp_partial' perferences when reducing the
-		// lenght of a preference. Remove them all.
-		$this->remove_preference($name);
-
-		// Make sure preferences which equal NULL are saved
-		if (empty($value))
-			set_pref($name, '', $event, 2, $type);
-
-		$i = 0; $value = doSlash($value);
-		// Limit preference to approximatly 4Kb of data. I hope this will be enough
-		while (strlen($value) && $i < 16) {
-			// Grab the first 255 chars from the value and strip any backward slashes which
-			// cause the SQL to break.
-			$value_segment = rtrim(substr($value, 0, 255), '\\');
-
-			// Set the preference and update name for the next array_key_exists check.
-			set_pref($name, $value_segment, $event, 2, ($i ? 'gbp_partial' : $type));
-			$name = $base_name.'_'.++$i;
-
-			// Remove the segment of the value which has been saved.
-			$value = substr_replace($value, '', 0, strlen($value_segment));
-		}
+		$this->db_write($name, $value, $event, $type);
 	}
 
-	function remove_preference ($key) {
-		$event = $this->event;
-		safe_delete('txp_prefs', "event = '$event' AND ((name LIKE '$key') OR (name LIKE '{$key}_%' AND html = 'gbp_partial'))");
-	}
-
-	function gbp_serialized ($step, $value, $item = '') {
-		switch (strtolower($step)) {
-			default:
-			case 'ui_in':
-				if (!is_array($value)) $value = array($value);
-				return text_input($item, implode(',', $value), 50);
-			break;
-			case 'ui_out':
-				return explode(',', $value);
-			break;
-			case 'db_set':
-				return serialize($value);
-			break;
-			case 'db_get':
-				return unserialize($value);
-			break;
-		}
-		return '';
-	}
-
-	function gbp_array_text ($step, $value, $item = '') {
-		switch (strtolower($step)) {
-			default:
-			case 'ui_in':
-				if (!is_array($value)) $value = array($value);
-				return text_input($item, implode(',', $value), 50);
-			break;
-			case 'ui_out':
-				return explode(',', $value);
-			break;
-			case 'db_set':
-				return implode(',', $value);
-			break;
-			case 'db_get':
-				return explode(',', $value);
-			break;
-		}
-		return '';
+	function remove_preference ($name) {
+		$this->db_remove($name, $this->$event);
 	}
 
 	function &add_tab ($tab, $is_default = NULL) {
@@ -613,6 +522,106 @@ class GBPAdminTabView {
 	}
 }
 
+class GBPPreferenceStore {
+	function db_read ($name, $type = null) {
+		global $prefs;
+
+		// The base name which gbp_partial preferences could share.
+		$base_name = $name;
+
+		// Combine the extended preferences, which go over two rows into one preference.
+		$i = 0; $value = '';
+		while (array_key_exists($name, $prefs)) {
+			$value .= $prefs[$name];
+			unset($prefs[$name]);
+			// Update name for the next array_key_exists check.
+			$name = $base_name.'_'.++$i;
+		}
+
+		// If there is no value then revert to the default value if it exists.
+		if ((!$value || (@!$value[0] && count($value) <= 1)) && isset($default_value))
+			$value = $default_value;
+
+		// Else if this a custom type (E.g. gbp_serialized OR gbp_array_text)
+		// call it's 'get' method to decode it's value.
+		else if (is_callable(array(&$this, $type)))
+			$value = call_user_func(array(&$this, $type), 'get', $value);
+
+		// Re-set the combined and decoded value to the global prefs array.
+		$prefs[$base_name] = $value;
+
+		return $value;
+	}
+
+	function db_write ($name, $value, $event, $type) {
+		global $prefs;
+
+		// The base name which gbp_partial preferences could share.
+		$base_name = $name;
+
+		// Set the new value to the global prefs array
+		$prefs[$base_name] = $value;
+
+		// If this preference has a custom type (E.g. gbp_serialized OR gbp_array_text)
+		// call it's 'set' method to encode the value.
+		if (is_callable(array(&$this, $type)))
+			$value = call_user_func(array(&$this, $type), 'set', $value);
+
+		// It is possible to leave old 'gbp_partial' perferences when reducing the
+		// lenght of a preference. Remove them all.
+		$this->db_remove($name, $event);
+
+		// Make sure preferences which equal NULL are saved
+		if (empty($value))
+			set_pref($name, '', $event, 2, $type);
+
+		$i = 0; $value = doSlash($value);
+		// Limit preference to approximatly 4Kb of data. I hope this will be enough
+		while (strlen($value) && $i < 16) {
+			// Grab the first 255 chars from the value and strip any backward slashes which
+			// cause the SQL to break.
+			$value_segment = rtrim(substr($value, 0, 255), '\\');
+
+			// Set the preference and update name for the next array_key_exists check.
+			set_pref($name, $value_segment, $event, 2, ($i ? 'gbp_partial' : $type));
+			$name = $base_name.'_'.++$i;
+
+			// Remove the segment of the value which has been saved.
+			$value = substr_replace($value, '', 0, strlen($value_segment));
+		}
+	}
+
+	function db_remove ($name, $event) {
+		safe_delete('txp_prefs', "event = '$event' AND ((name LIKE '$name') OR (name LIKE '{$name}_%' AND html = 'gbp_partial'))");
+	}
+
+	function gbp_serialized ($step, $value) {
+		switch (strtolower($step)) {
+			default:
+			case 'set':
+				return serialize($value);
+			break;
+			case 'get':
+				return unserialize($value);
+			break;
+		}
+		return '';
+	}
+
+	function gbp_array_text ($step, $value) {
+		switch (strtolower($step)) {
+			default:
+			case 'set':
+				return implode(',', $value);
+			break;
+			case 'get':
+				return explode(',', $value);
+			break;
+		}
+		return '';
+	}
+}
+
 class GBPPreferenceTabView extends GBPAdminTabView {
 
 	var $permissions = 'prefs';
@@ -627,8 +636,10 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 			foreach ($this->parent->preferences as $key => $pref) {
 				extract($pref);
 				$value = ps($key);
-				if (is_callable(array(&$this->parent, $type)))
-					$value = call_user_func(array(&$this->parent, $type), 'ui_out', $value);
+				if (is_callable(array(&$this->parent, $type.'_ui')))
+					$value = call_user_func(array(&$this->parent, $type.'_ui'), 'out', $value, $key);
+				else if (is_callable(array(&$this, $type)))
+					$value = call_user_func(array(&$this, $type), 'out', $value, $key);
 				$this->parent->set_preference($key, $value);
 			}
 		}
@@ -655,8 +666,10 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 					$out .= td(pref_func('text_input', $key, $value, 20));
 				break;
 				default:
-					if (is_callable(array(&$this->parent, $type)))
-						$out .= td(call_user_func(array(&$this->parent, $type), 'ui_in', $value, $key));
+					if (is_callable(array(&$this->parent, $type.'_ui')))
+						$out .= td(call_user_func(array(&$this->parent, $type.'_ui'), 'in', $value, $key));
+					else if (is_callable(array(&$this, $type)))
+						$out .= td(call_user_func(array(&$this, $type), 'in', $value, $key));
 					else
 						$out .= td(pref_func($type, $key, $value, 50));
 				break;
@@ -677,6 +690,24 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 	function popHelp ($helpvar) {
 		$script = hu.basename(txpath).'/index.php';
 		return '<a href="'.$script.'?event=plugin&step=plugin_help&name='.$this->parent->plugin_name.'#'.$helpvar.'" class="pophelp">?</a>';
+	}
+
+	function gbp_serialized ($step, $value, $item = '') {
+		switch (strtolower($step)) {
+			default:
+			case 'in':
+				if (!is_array($value)) $value = array($value);
+				return text_input($item, implode(',', $value), 50);
+			break;
+			case 'out':
+				return explode(',', $value);
+			break;
+		}
+		return '';
+	}
+
+	function gbp_array_text ($step, $value, $item = '') {
+		return $this->gbp_serialized($step, $value, $item);
 	}
 }
 
