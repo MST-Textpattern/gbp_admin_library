@@ -63,6 +63,7 @@ class GBPPlugin {
 
 	// Constructor
 	function GBPPlugin ($title = '', $event = '', $parent_tab = '') {
+		$this->initialize();
 
 		global $txp_current_plugin;
 
@@ -131,6 +132,11 @@ class GBPPlugin {
 		}
 		if (@txpinterface == 'public')
 			$this->load_preferences();
+	}
+
+	function initialize () {
+		// Override this function if you need to have a callback to the
+		// constructor in both the admin and public interfaces.
 	}
 
 	function load_preferences () {
