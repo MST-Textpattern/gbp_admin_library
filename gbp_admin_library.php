@@ -152,7 +152,7 @@ class GBPPlugin extends GBPPreferenceStore {
 
 		// Add the default preferences which aren't saved in the db but defined in the plugin's source.
 		foreach ($this->preferences as $key => $pref) {
-			$db_pref = array('name' => $this->plugin_name.'_'.$key, 'type' => $pref['type']);
+			$db_pref = array('name' => $this->plugin_name.'_'.$key, 'type' => $pref['type'], 'options' => $pref['options']);
 			if (array_search($db_pref, $preferences) === false)
 				$preferences[] = $db_pref + array('default_value' => $pref['value']);
 		}
@@ -165,8 +165,10 @@ class GBPPlugin extends GBPPreferenceStore {
 
 			// If the preference exists in our preference array set the new value and correct type.
 			$base_name = substr($name, strlen($this->plugin_name.'_'));
-			if (array_key_exists($base_name, $this->preferences))
+			if (array_key_exists($base_name, $this->preferences)) {
 				$this->preferences[$base_name] = array('value' => $value, 'type' => $type);
+				if (isset($options)) $this->preferences[$base_name]['options'] = $options;
+			}
 		}
 	}
 
@@ -708,6 +710,22 @@ class GBPPreferenceTabView extends GBPAdminTabView {
 
 	function gbp_array_text ($step, $value, $item = '') {
 		return $this->gbp_serialized($step, $value, $item);
+	}
+
+	function gbp_popup ($step, $value, $item = '') {
+		$values = @$this->parent->preferences[$item]['options'];
+		if (!is_array($values)) $values = array($values);
+
+		switch (strtolower($step)) {
+			default:
+			case 'in':
+				return selectInput($item, $values, $value, '', '', $item);
+			break;
+			case 'out':
+				return $values[$value];
+			break;
+		}
+		return '';
 	}
 }
 
