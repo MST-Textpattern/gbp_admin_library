@@ -1,10 +1,10 @@
 <?php
 
 $plugin['name'] = 'gbp_admin_library';
-$plugin['version'] = '0.4';
+$plugin['version'] = '2.0.0 a1';
 $plugin['author'] = 'Graeme Porteous';
-$plugin['author_uri'] = 'http://rgbp.co.uk/projects/textpattern/gbp_admin_library/';
-$plugin['description'] = 'GBP\'s Admin-Side Library';
+$plugin['author_uri'] = 'http://graemeporteous.co.uk/projects/textpattern/gbp_admin_library/';
+$plugin['description'] = 'Admin-side library for GBP plugins';
 $plugin['type'] = '2';
 
 @include_once('../zem_tpl.php');
