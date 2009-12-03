@@ -515,7 +515,7 @@ class GBPAdminTabView {
 		return $this->parent->remove_preference($key);
 	}
 
-	function url ($vars, $gp = false) {
+	function url ($vars = array(), $gp = false) {
 		return $this->parent->url($vars, $gp);
 	}
 
